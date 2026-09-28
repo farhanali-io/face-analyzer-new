@@ -1,5 +1,5 @@
 # robots.txt for Tool Genie — Full Face Analyzer
-# Permitting all web crawlers, search engines, and AI agents
+# Permitting all web crawlers, search engines, and AI agent
 
 User-agent: *
 Allow: /
