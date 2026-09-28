@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    base: '/face-analyzer-new/',
+    base: '/', // Change from '/face-analyzer-new/' to '/'
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
