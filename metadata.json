@@ -1,0 +1,10 @@
+{
+  "name": "Tool Genie — Full Face Analyzer",
+  "description": "AI Full Face Analyzer measuring facial attractiveness, symmetry, golden ratio adherence, jawline gonial angle, cheekbone prominence, canthal tilt, and biological age in the Slush sticker aesthetic.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script>
+    // Safeguard window.fetch against environments where window.fetch has only a getter
+    (function() {
+      try {
+        var _fetch = window.fetch ? window.fetch.bind(window) : null;
+        Object.defineProperty(window, 'fetch', {
+          get: function() { return _fetch; },
+          set: function(fn) { _fetch = fn; },
+          configurable: true,
+          enumerable: true
+        });
+        if (typeof globalThis !== 'undefined' && globalThis !== window) {
+          try {
+            Object.defineProperty(globalThis, 'fetch', {
+              get: function() { return _fetch; },
+              set: function(fn) { _fetch = fn; },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.warn('Fetch setter safeguard note:', e);
+      }
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tool Genie — Full Face Analyzer & Attractiveness Score</title>
+  <meta name="description" content="AI Full Face Analyzer measuring facial attractiveness, symmetry, golden ratio adherence, jawline gonial angle, cheekbone prominence, canthal tilt, and biological age." />
+  <meta property="og:title" content="Tool Genie — Full Face Analyzer" />
+  <meta property="og:description" content="Measure facial harmony, golden ratio (1.618), symmetry, and attractiveness score with real-time biometric analysis." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://toolgenie.ai/" />
+  <meta property="og:site_name" content="Tool Genie" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://toolgenie.ai/" />
+
+  <!-- Schema.org WebApplication & FAQPage Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://toolgenie.ai/#webapp",
+        "name": "Tool Genie — Full Face Analyzer & Attractiveness Score",
+        "url": "https://toolgenie.ai/",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "description": "Clinical AI biometric analyzer calculating facial symmetry, golden ratio (1.618), mandibular gonial angle, canthal tilt, and biological facial age.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Bilateral Facial Symmetry Midline Deviation",
+          "Golden Ratio (Φ 1.618) Vertical Thirds Adherence",
+          "Mandibular Jawline Gonial Angle Cephalometry",
+          "Bizygomatic Cheekbone Prominence and Midface Ratio",
+          "Palpebral Canthal Tilt Axis Inclination",
+          "Biological Dermal Vitality & Age Estimation",
+          "High-Resolution Downloadable Scorecard (.PNG)"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://toolgenie.ai/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is the overall facial attractiveness score calculated?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The overall facial attractiveness score is computed by synthesizing 6 core neoclassical cephalometric standards: bilateral sagittal symmetry, golden ratio (1.618) vertical thirds, mandibular gonial angle definition, bizygomatic cheekbone projection, canthal tilt angle, and dermal tissue vitality."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is positive canthal tilt and why is it desirable?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Positive canthal tilt occurs when the lateral canthus (outer corner of the eye) is tilted +2° to +6° higher than the medial canthus (inner corner). It creates an alert, youthful eye appearance and is a recognized hallmark of high facial harmony."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the ideal jawline gonial angle?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "In maxillofacial cephalometry, the optimal masculine gonial angle ranges between 118° and 124° for sharp mandibular definition, while the ideal feminine curve sits between 122° and 128°."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does Tool Genie store or retain uploaded face photos?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Tool Genie maintains a strict Zero Data Retention privacy policy. Analysis is performed dynamically with immediate cryptographic disposal; portraits are never permanently stored, logged, or shared."
+            }
+          }
+        ]
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://toolgenie.ai/#organization",
+        "name": "Tool Genie",
+        "url": "https://toolgenie.ai/",
+        "logo": "https://toolgenie.ai/favicon.ico"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Google Fonts: Anton (Display / Lateral substitute) & Plus Jakarta Sans (UI / Aeonik substitute) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.143.0/build/three.module.js",
+      "three/examples/jsm/": "https://unpkg.com/three@0.143.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="/src/slush.css" />
+</head>
+<body>
+  <!-- 3D Electric Blue Inflatable Ribbon Canvas -->
+  <canvas class="ribbon-canvas" id="ribbonCanvas"></canvas>
+
+  <!-- Marquee Banner (Continuous Horizontal Loop) -->
+  <div class="marquee-bar">
+    <div class="marquee-content">
+      <span>★ TOOL GENIE — FULL FACE BIOMETRIC ANALYZER</span>
+      <span>★ NEOCLASSICAL SYMMETRY & HARMONY SCORE</span>
+      <span>★ GOLDEN RATIO Φ 1.618 ADHERENCE</span>
+      <span>★ JAWLINE GONIAL ANGLE & CANTHAL TILT</span>
+      <span>★ ON-DEVICE 100% PRIVATE BIOMETRIC SUITE</span>
+      <span>★ TOOL GENIE — FULL FACE BIOMETRIC ANALYZER</span>
+      <span>★ NEOCLASSICAL SYMMETRY & HARMONY SCORE</span>
+      <span>★ GOLDEN RATIO Φ 1.618 ADHERENCE</span>
+      <span>★ JAWLINE GONIAL ANGLE & CANTHAL TILT</span>
+      <span>★ ON-DEVICE 100% PRIVATE BIOMETRIC SUITE</span>
+    </div>
+  </div>
+
+  <!-- Slide-out Navigation Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="siteDrawer" aria-label="Site Navigation">
+    <div class="drawer-header">
+      <div class="brand-badge">
+        <span class="brand-logo-disc">TG</span>
+        Tool Genie
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()" aria-label="Close menu">&times;</button>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-family: var(--font-display); font-size: 13px; text-transform: uppercase; margin-bottom: 12px; color: var(--color-carbon);">
+        Analyzer Tools
+      </h4>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li><a href="#analyzer" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">Full Face Analyzer (Single Suite)</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">1. Facial Symmetry & Balance</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">2. Golden Ratio (Φ 1.618) Test</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">3. Jawline & Gonial Angle</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">4. Cheekbone Prominence</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">5. Canthal Tilt & Eyes</a></li>
+        <li><a href="#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">6. Biological Age Estimator</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h4 style="font-family: var(--font-display); font-size: 13px; text-transform: uppercase; margin-bottom: 12px; color: var(--color-carbon);">
+        Science, Blog & Trust
+      </h4>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li><a href="/blog" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📚 Biometrics & Aesthetics Blog</a></li>
+        <li><a href="#methodology" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🧬 Neoclassical Canons</a></li>
+        <li><a href="#methodology" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">Φ Golden Ratio Formula</a></li>
+        <li><a href="/contact" onclick="closeDrawer()" class="btn-slush btn-slush-mint" style="width:100%; justify-content:flex-start;">✉️ Contact Research Team</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="page" id="top">
+    <!-- TOP NAVIGATION -->
+    <header class="nav-wrap">
+      <a href="#top" class="brand-badge">
+        <span class="brand-logo-disc">TG</span>
+        Tool Genie
+      </a>
+
+      <!-- Center Pill Nav Buttons -->
+      <nav class="nav-pills">
+        <a href="#analyzer" class="nav-pill-btn active">Full Face Analyzer</a>
+        <a href="#tools" class="nav-pill-btn">6 Canons</a>
+        <a href="#methodology" class="nav-pill-btn">Methodology</a>
+        <a href="/blog" class="nav-pill-btn">Blog</a>
+        <a href="/contact" class="nav-pill-btn">Contact</a>
+      </nav>
+
+      <!-- Right Actions: Filled CTA & Plus Button -->
+      <div class="nav-right-actions">
+        <a href="#analyzer" class="btn-slush btn-slush-black">
+          Launch Tool
+        </a>
+        <button class="btn-plus" onclick="openDrawer()" aria-label="Open Navigation Menu" title="Open Navigation Menu">
+          +
+        </button>
+      </div>
+    </header>
+
+    <!-- SECTION 1: HERO (Sky Wash Ground + Inflatable Ribbon + Crushed Sculptural Headline) -->
+    <section class="section-hero">
+      <!-- Floating Confetti Stickers around Hero Display Text -->
+      <div class="floating-sticker sticker" style="top: 18%; left: 8%; background-color: var(--color-ember); color: var(--color-paper-white); transform: rotate(-8deg);">
+        🚀 CLINICAL AI
+      </div>
+      <div class="floating-sticker sticker" style="top: 24%; right: 9%; background-color: var(--color-sunburst); transform: rotate(7deg);">
+        ★ Φ 1.618 RATIO
+      </div>
+      <div class="floating-sticker sticker" style="bottom: 22%; left: 10%; background-color: var(--color-mint-pop); transform: rotate(-5deg);">
+        ✔ 100% PRIVATE
+      </div>
+      <div class="floating-sticker sticker" style="bottom: 20%; right: 11%; background-color: var(--color-voltage-violet); color: var(--color-paper-white); transform: rotate(8deg);">
+        👁 CANTHAL TILT
+      </div>
+
+      <div class="hero-container">
+        <div class="sticker" style="background-color: var(--color-paper-white); margin-bottom: 12px;">
+          ✦ BIOMETRIC FACIAL AESTHETICS & SYMMETRY
+        </div>
+
+        <h1 class="hero-display-title">
+          FULL FACE<br />ANALYZER
+        </h1>
+
+        <p class="hero-tagline">
+          Analyze neoclassical facial symmetry, golden ratio adherence, jawline gonial angle, cheekbone prominence, canthal tilt, and biological age with an overall attractiveness score out of 100.
+        </p>
+
+        <div class="hero-button-row">
+          <a href="#analyzer" class="btn-slush btn-slush-black">
+            Analyze Your Face Now
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </a>
+          <a href="#methodology" class="btn-slush btn-slush-white">
+            Read Methodology
+          </a>
+          <button type="button" onclick="loadSample('female')" class="btn-slush btn-slush-lavender">
+            👩 Test With Demo
+          </button>
+        </div>
+
+        <!-- Trust Pill Badges -->
+        <div class="sticker-pill-row">
+          <span class="sticker" style="background-color: var(--color-paper-white);">★ Φ GOLDEN RATIO 1.618</span>
+          <span class="sticker" style="background-color: var(--color-mint-pop);">★ BILATERAL MIDLINE</span>
+          <span class="sticker" style="background-color: var(--color-sunburst);">★ FACIAL THIRDS</span>
+          <span class="sticker" style="background-color: var(--color-lavender);">★ HORIZONTAL FIFTHS</span>
+          <span class="sticker" style="background-color: var(--color-paper-white);">★ GONIAL CEPHALOMETRY</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: THE MASTER TOOL SECTION (Paper White Ground) -->
+    <section class="section-paper" id="analyzer">
+      <div class="content-maxw">
+        <div class="analyzer-master-card">
+          <!-- Input Area -->
+          <div id="analyzerInputArea">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div class="sticker" style="background-color: var(--color-mint-pop); margin-bottom: 12px;">
+                ★ INSTANT BIOMETRIC SCAN
+              </div>
+              <h2 style="font-family: var(--font-display); font-size: clamp(28px, 4vw, 44px); text-transform: uppercase; color: var(--color-carbon); margin-bottom: 10px;">
+                Upload or Snap Your Portrait
+              </h2>
+              <p style="font-size: 15.5px; color: var(--color-carbon); max-width: 580px; margin: 0 auto 20px; line-height: 1.5;">
+                Direct front-facing photo with neutral expression provides the highest accuracy for symmetry, golden ratio, and proportions.
+              </p>
+
+              <!-- Pill Mode Tabs -->
+              <div class="tab-pills-bar">
+                <button class="tab-pill active" id="tabUpload" onclick="switchInputMode('upload')">
+                  Upload Photo
+                </button>
+                <button class="tab-pill" id="tabCamera" onclick="switchInputMode('camera')">
+                  Live Camera
+                </button>
+              </div>
+
+              <!-- Model Loading Spinner Indicator -->
+              <div id="modelLoaderPill" class="model-loader-pill" style="display: inline-flex;">
+                <span id="modelLoaderSpinner" class="model-loader-spinner"></span>
+                <span id="modelLoaderText">Loading models...</span>
+              </div>
+            </div>
+
+            <!-- Clarity Error Card (Displayed above input area when scan fails) -->
+            <div id="clarityErrorCard" class="clarity-card" style="display:none; margin-bottom:24px;">
+              <div style="font-size:38px; margin-bottom:8px;">⚠️</div>
+              <h3 style="font-family: var(--font-display); font-size: 24px; text-transform: uppercase; margin-bottom: 8px;">
+                Photo Clarity Advisory
+              </h3>
+              <p id="clarityErrorDesc" style="font-size: 15px; margin-bottom: 16px;">
+                The uploaded photo is not clear enough for high-accuracy cephalometric mapping.
+              </p>
+              <div class="clarity-tip-container">
+                <strong style="display:block; margin-bottom:6px; font-size:13px; text-transform:uppercase;">
+                  ★ Tips for Highest Accuracy:
+                </strong>
+                <ul style="list-style:none; display:flex; flex-direction:column; gap:4px; font-size:13.5px;">
+                  <li>• Ensure even front lighting (avoid heavy backlighting or deep shadows)</li>
+                  <li>• Face camera directly at eye level with neutral facial expression</li>
+                  <li>• Remove sunglasses, hats, or heavy hair covering brows and chin</li>
+                </ul>
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button type="button" onclick="retryScan()" class="btn-slush btn-slush-black btn-primary">
+                  Try Another Photo
+                </button>
+                <button type="button" class="btn-slush btn-slush-white" onclick="loadSample('female')">
+                  Test With Demo Portrait
+                </button>
+              </div>
+            </div>
+
+            <!-- Upload Container -->
+            <div id="uploadContainer">
+              <div class="slush-drop-box" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)" />
+                <div class="upload-sticker-icon">
+                  📷
+                </div>
+                <h3 style="font-family: var(--font-display); font-size: 22px; text-transform: uppercase; margin-bottom: 8px;">
+                  Drop your portrait here or click to browse
+                </h3>
+                <p style="font-size: 14.5px; color: var(--color-carbon); max-width: 440px; margin: 0 auto;">
+                  Supports JPG, PNG, WEBP. On-device analysis ensures zero permanent server storage.
+                </p>
+              </div>
+            </div>
+
+            <!-- Live Camera Container -->
+            <div id="cameraContainer" style="display:none">
+              <!-- Permission Prompt -->
+              <div id="cameraPermissionPrompt" class="camera-card">
+                <div class="upload-sticker-icon" style="background-color: var(--color-mint-pop);">
+                  🎥
+                </div>
+                <h3 style="font-family: var(--font-display); font-size: 22px; text-transform: uppercase; margin-bottom: 10px;">
+                  Enable Camera For Live Alignment
+                </h3>
+                <p style="font-size: 14.5px; line-height: 1.55; max-width: 440px; margin: 0 auto 22px;">
+                  Position your face within the biometric structure grid to automatically analyze facial symmetry and neoclassical proportions.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                  <button type="button" class="btn-slush btn-slush-black" onclick="requestCameraAccess()">
+                    Allow Camera & Start
+                  </button>
+                  <button type="button" class="btn-slush btn-slush-white" onclick="switchInputMode('upload')">
+                    Use Upload Instead
+                  </button>
+                </div>
+              </div>
+
+              <!-- Active Camera Preview with Alignment Grid -->
+              <div id="cameraActiveArea" style="display:none">
+                <div class="camera-preview-box">
+                  <video class="camera-video" id="webcamVideo" autoplay playsinline muted></video>
+
+                  <div class="camera-grid-layer">
+                    <div class="camera-pill" id="cameraAlignmentPill">
+                      <span class="pill-dot"></span>
+                      <span id="cameraStatusText">Align your face inside the grid</span>
+                    </div>
+
+                    <!-- SVG Face Alignment Grid -->
+                    <svg viewBox="0 0 360 480" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
+                      <ellipse cx="180" cy="240" rx="105" ry="155" stroke="#000000" stroke-width="2.5" stroke-dasharray="6 4" />
+                      <line x1="95" y1="140" x2="265" y2="140" stroke="#000000" stroke-width="1.5" stroke-dasharray="3 3"/>
+                      <line x1="80" y1="215" x2="280" y2="215" stroke="#000000" stroke-width="2"/>
+                      <circle cx="135" cy="215" r="11" stroke="#000000" stroke-width="2"/>
+                      <circle cx="135" cy="215" r="3" fill="#000000"/>
+                      <circle cx="225" cy="215" r="11" stroke="#000000" stroke-width="2"/>
+                      <circle cx="225" cy="215" r="3" fill="#000000"/>
+                      <line x1="180" y1="100" x2="180" y2="380" stroke="#4da2ff" stroke-width="2" stroke-dasharray="4 4"/>
+                      <circle cx="180" cy="285" r="4.5" stroke="#000000" fill="#ffd731" stroke-width="1.5"/>
+                    </svg>
+
+                    <!-- Auto-Capture Countdown -->
+                    <div class="countdown-sticker" id="cameraCountdownBadge" style="display:none">
+                      <span id="countdownNumber">3</span>
+                    </div>
+
+                    <div style="position:relative; z-index:5;">
+                      <button type="button" class="btn-slush btn-slush-white" onclick="captureLiveSnapshot()" style="padding: 7px 18px; font-size: 13px;">
+                        📸 Snap Photo Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="text-align:center; margin-top:16px;">
+                  <button type="button" class="btn-slush btn-slush-white" onclick="stopWebcam(); switchInputMode('upload');">
+                    Switch to Photo Upload
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Demo Sample Portraits -->
+            <div class="samples-bar">
+              <span style="font-size: 13px; font-weight: 700; text-transform: uppercase;">Or test instant demo:</span>
+              <button type="button" class="sample-pill-btn" onclick="loadSample('female')">
+                👩 Female Portrait
+              </button>
+              <button type="button" class="sample-pill-btn" onclick="loadSample('male')">
+                👨 Male Portrait
+              </button>
+            </div>
+          </div>
+
+          <!-- Scanning Animation State -->
+          <div class="scanning-state" id="scanningOverlay">
+            <div class="scanner-box">
+              <img id="scanningImgPreview" class="scanner-img-view" src="" alt="Scanning Face" />
+              <div class="scanner-beam"></div>
+            </div>
+            <div class="sticker" style="background-color: var(--color-sunburst); margin-bottom: 10px;">
+              ★ PROCESSING BIOMETRICS
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 24px; text-transform: uppercase; margin-bottom: 6px;">
+              Analyzing Facial Thirds & Symmetry
+            </h3>
+            <p id="scanStepText" style="font-size: 15px; font-weight: 600; color: var(--color-carbon);">
+              Detecting facial landmark coordinates...
+            </p>
+          </div>
+
+          <!-- RESULTS DASHBOARD (Pastel Slush Sticker Aesthetic) -->
+          <div class="results-wrap" id="resultDashboard">
+            <!-- Score Hero Card (Lavender Ground #e9ccff + 1px border) -->
+            <div class="score-hero-card">
+              <div class="sticker" style="background-color: var(--color-paper-white); margin-bottom: 12px;">
+                ★ CERTIFIED BIOMETRIC REPORT
+              </div>
+              <div style="display: flex; align-items: baseline; justify-content: center; margin-bottom: 6px;">
+                <span class="score-display-number" id="resAttractivenessScore">91</span>
+                <span class="score-out-label">/ 100</span>
+              </div>
+              <div class="sticker" id="resHarmonyTier" style="background-color: var(--color-mint-pop); font-size: 15px; padding: 6px 20px; margin-bottom: 14px;">
+                Exceptional Facial Harmony
+              </div>
+              <p id="resSummaryText" style="font-size: 16.5px; line-height: 1.5; max-width: 680px; margin: 0 auto 24px;">
+                Exceptional neoclassical facial harmony characterized by strong vertical thirds balance, sharp mandibular definition, and positive canthal tilt.
+              </p>
+              <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <!-- 100% WORKING DOWNLOAD CARD BUTTON -->
+                <button type="button" class="btn-slush btn-slush-black" onclick="downloadAnalysisCard()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download Analysis Card (.PNG)
+                </button>
+                <button type="button" class="btn-slush btn-slush-white" onclick="resetAnalyzer()">
+                  Analyze Another Photo
+                </button>
+              </div>
+            </div>
+
+            <!-- Dual Pane: Left Face preview + Right 6 Tool Cards -->
+            <div class="results-grid">
+              <!-- Left: Face Photo & Landmark Overlay Toggles -->
+              <div class="face-card-panel">
+                <div class="face-photo-wrap">
+                  <img id="resultPhotoImg" src="" alt="Analyzed Face" />
+                  <canvas id="landmarkOverlayCanvas"></canvas>
+                </div>
+
+                <div style="display: flex; flex-direction: column;">
+                  <label class="toggle-chip-item active">
+                    <span>Facial Thirds & Golden Grid</span>
+                    <input type="checkbox" id="toggleThirds" checked onchange="redrawLandmarkCanvas()" />
+                  </label>
+                  <label class="toggle-chip-item active">
+                    <span>Symmetry Midline & Eye Axis</span>
+                    <input type="checkbox" id="toggleSymmetry" checked onchange="redrawLandmarkCanvas()" />
+                  </label>
+                  <label class="toggle-chip-item active">
+                    <span>Jawline Gonial Vector</span>
+                    <input type="checkbox" id="toggleJaw" checked onchange="redrawLandmarkCanvas()" />
+                  </label>
+                </div>
+              </div>
+
+              <!-- Right: The 6 Tool Metric Cards -->
+              <div class="tool-cards-grid">
+                <!-- 1. Facial Symmetry -->
+                <div class="metric-card-slush" style="background-color: var(--color-sky-wash);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-mint-pop);">⚖️</div>
+                      <span>1. Facial Symmetry</span>
+                    </div>
+                    <span class="metric-score-value" id="resSymScore">92%</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barSym" style="width:92%"></div></div>
+                  <p id="resSymDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Minimal bilateral deviation between left and right hemifaces.</p>
+                  <span class="sticker" id="resSymPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Variance: 1.8%</span>
+                </div>
+
+                <!-- 2. Golden Ratio -->
+                <div class="metric-card-slush" style="background-color: var(--color-sunburst);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">Φ</div>
+                      <span>2. Golden Ratio (Φ)</span>
+                    </div>
+                    <span class="metric-score-value" id="resPhiScore">90%</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barPhi" style="width:90%"></div></div>
+                  <p id="resPhiDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Close 1:1.62 alignment across forehead, nose tip, and chin.</p>
+                  <span class="sticker" id="resPhiPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Ratio: 1:1.63</span>
+                </div>
+
+                <!-- 3. Jawline -->
+                <div class="metric-card-slush" style="background-color: var(--color-lavender);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">📐</div>
+                      <span>3. Jawline Definition</span>
+                    </div>
+                    <span class="metric-score-value" id="resJawScore">89%</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barJaw" style="width:89%"></div></div>
+                  <p id="resJawDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Crisp mandibular margin with pronounced jaw-to-neck transition.</p>
+                  <span class="sticker" id="resJawPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Gonial: 122°</span>
+                </div>
+
+                <!-- 4. Cheekbones -->
+                <div class="metric-card-slush" style="background-color: var(--color-paper-white);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-electric-blue); color: var(--color-paper-white);">💎</div>
+                      <span>4. Cheekbone Prominence</span>
+                    </div>
+                    <span class="metric-score-value" id="resCheekScore">88%</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barCheek" style="width:88%"></div></div>
+                  <p id="resCheekDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Prominent zygomatic arch framing the midface.</p>
+                  <span class="sticker" id="resCheekPill" style="background-color: var(--color-soft-mist); font-size: 12px; padding: 4px 10px;">Zygomatic: High</span>
+                </div>
+
+                <!-- 5. Canthal Tilt -->
+                <div class="metric-card-slush" style="background-color: var(--color-mint-pop);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">👁</div>
+                      <span>5. Canthal Tilt & Eyes</span>
+                    </div>
+                    <span class="metric-score-value" id="resCanthalScore">91%</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barCanthal" style="width:91%"></div></div>
+                  <p id="resCanthalDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Positive palpebral axis inclination with balanced eye spacing.</p>
+                  <span class="sticker" id="resCanthalPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Positive (+4.1°)</span>
+                </div>
+
+                <!-- 6. Biological Age -->
+                <div class="metric-card-slush" style="background-color: var(--color-soft-mist);">
+                  <div class="metric-card-header">
+                    <div class="metric-card-title">
+                      <div class="metric-sticker-icon" style="background-color: var(--color-sunburst);">🧬</div>
+                      <span>6. Biological Age</span>
+                    </div>
+                    <span class="metric-score-value" id="resAgeScore">26 yrs</span>
+                  </div>
+                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barAge" style="width:92%"></div></div>
+                  <p id="resAgeDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Smooth collagen structure along cheek and periorbital planes.</p>
+                  <span class="sticker" id="resAgePill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Vitality: 92/100</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Insights Box -->
+            <div class="insights-box">
+              <div>
+                <h4>★ Key Facial Strengths</h4>
+                <ul id="resStrengthsList">
+                  <li>★ Harmonious neoclassical vertical thirds ratio</li>
+                  <li>★ Positive canthal tilt and balanced palpebral aperture</li>
+                  <li>★ Defined mandibular margin and sharp gonial contour</li>
+                </ul>
+              </div>
+              <div>
+                <h4>★ Aesthetic Recommendations</h4>
+                <ul id="resRecommendationsList">
+                  <li>★ Consistent posture supports jawline contour clarity</li>
+                  <li>★ Maintain balanced hydration for optimal dermal volume</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: THE 6 INDIVIDUAL STANDARDS DEEP DIVE (Concrete Gray Ground) -->
+    <section class="section-concrete" id="tools">
+      <div class="content-maxw">
+        <div class="section-title-block">
+          <div class="sticker" style="background-color: var(--color-paper-white);">
+            ★ THE 6 MATHEMATICAL STANDARDS
+          </div>
+          <h2 class="section-display-h2">
+            6 BIOMETRIC<br />CANONS
+          </h2>
+          <p class="section-desc-p">
+            Each metric is calculated through proven cephalometric formulas, golden ratio proportions (Φ 1.618), and high-resolution landmark geometry.
+          </p>
+        </div>
+
+        <div class="cards-trio-grid">
+          <!-- Card 1 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-mint-pop);">
+              ⚖️ TOOL 1
+            </div>
+            <h3>Facial Symmetry</h3>
+            <p>Measures bilateral coordinate alignment across the sagittal midline, tracking eye-level tilt, nose deviation, and lip horizontal balance.</p>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-sunburst);">
+              Φ TOOL 2
+            </div>
+            <h3>Golden Ratio (Φ 1.618)</h3>
+            <p>Validates adherence to the Divine Proportion across the vertical thirds (hairline to brow, brow to subnasale, subnasale to chin).</p>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-lavender);">
+              📐 TOOL 3
+            </div>
+            <h3>Jawline & Gonial Angle</h3>
+            <p>Identifies mandibular ramus inclination and gonial sharpness, evaluating masculine (118°-124°) and feminine (122°-128°) aesthetic ideals.</p>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-electric-blue); color: var(--color-paper-white);">
+              💎 TOOL 4
+            </div>
+            <h3>Cheekbone Prominence</h3>
+            <p>Calculates bizygomatic breadth relative to lower jaw width to measure cheek projection and midface compactness.</p>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-ember); color: var(--color-paper-white);">
+              👁 TOOL 5
+            </div>
+            <h3>Canthal Tilt & Eyes</h3>
+            <p>Calculates the angle from the medial to lateral canthus, scoring positive tilt, palpebral aperture width, and horizontal fifths.</p>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="slush-info-card">
+            <div class="slush-card-badge" style="background-color: var(--color-voltage-violet); color: var(--color-paper-white);">
+              🧬 TOOL 6
+            </div>
+            <h3>Biological Age Estimator</h3>
+            <p>Analyzes dermal tissue volume, periorbital smoothness, and nasolabial contours to estimate visual biological vitality.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: METHODOLOGY & CANONS (Paper White Ground) -->
+    <section class="section-paper" id="methodology">
+      <div class="content-maxw">
+        <div class="section-title-block">
+          <div class="sticker" style="background-color: var(--color-sunburst);">
+            ★ NEOCLASSICAL CANONS
+          </div>
+          <h2 class="section-display-h2">
+            SCIENTIFIC<br />FOUNDATIONS
+          </h2>
+          <p class="section-desc-p">
+            How Tool Genie translates classical neoclassical art canons and modern cephalometrics into objective mathematical measurements.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+          <div class="slush-info-card" style="background-color: var(--color-sky-wash);">
+            <div class="slush-card-badge" style="background-color: var(--color-paper-white);">
+              CANON I
+            </div>
+            <h3>The Law of Facial Thirds</h3>
+            <p>The classical aesthetic standard divides the human face into three equal vertical heights: trichion to nasion (upper), nasion to subnasale (middle), and subnasale to gnathion (lower). Tool Genie computes percentage divergence from this exact 1:1:1 division.</p>
+          </div>
+
+          <div class="slush-info-card" style="background-color: var(--color-lavender);">
+            <div class="slush-card-badge" style="background-color: var(--color-paper-white);">
+              CANON II
+            </div>
+            <h3>Horizontal Fifths & Canthal Vector</h3>
+            <p>A harmonious face is precisely five eye-widths wide. The intercanthal distance equals one eye-width, while the nose aligns with the medial canthi. A positive canthal tilt (+2° to +6°) provides youthful alertness.</p>
+          </div>
+        </div>
+
+        <!-- Four Big Stats Cards -->
+        <div class="stats-row">
+          <div class="stat-box" style="background-color: var(--color-sunburst);">
+            <div class="stat-number">68+</div>
+            <div class="stat-sub">Landmark Vectors Mapped</div>
+          </div>
+          <div class="stat-box" style="background-color: var(--color-mint-pop);">
+            <div class="stat-number">1.618</div>
+            <div class="stat-sub">Golden Ratio Φ Reference</div>
+          </div>
+          <div class="stat-box" style="background-color: var(--color-lavender);">
+            <div class="stat-number">100%</div>
+            <div class="stat-sub">Private & On-Device Safe</div>
+          </div>
+          <div class="stat-box" style="background-color: var(--color-electric-blue);">
+            <div class="stat-number" style="color: var(--color-paper-white);">&lt; 1.5s</div>
+            <div class="stat-sub" style="color: var(--color-paper-white);">Instant Biometric Speed</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: CTA & QR CARD (Lavender Ground) -->
+    <section class="section-lavender" id="cta">
+      <div class="content-maxw">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <div class="sticker" style="background-color: var(--color-paper-white); margin-bottom: 14px;">
+            ★ READY FOR YOUR REPORT?
+          </div>
+          <h2 class="section-display-h2">
+            DISCOVER YOUR<br />TRUE HARMONY
+          </h2>
+          <p class="section-desc-p" style="margin-bottom: 28px;">
+            Snap a selfie or upload a photo to receive your comprehensive 6-metric report and certified scorecard.
+          </p>
+        </div>
+
+        <!-- Slush QR Download Card Component -->
+        <div class="qr-download-card">
+          <div class="qr-panel-white">
+            <!-- Hand-drawn vector QR representation with 1px black outline -->
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100" height="100" fill="white"/>
+              <!-- Top Left Marker -->
+              <rect x="10" y="10" width="26" height="26" fill="black"/>
+              <rect x="14" y="14" width="18" height="18" fill="white"/>
+              <rect x="18" y="18" width="10" height="10" fill="black"/>
+              <!-- Top Right Marker -->
+              <rect x="64" y="10" width="26" height="26" fill="black"/>
+              <rect x="68" y="14" width="18" height="18" fill="white"/>
+              <rect x="72" y="18" width="10" height="10" fill="black"/>
+              <!-- Bottom Left Marker -->
+              <rect x="10" y="64" width="26" height="26" fill="black"/>
+              <rect x="14" y="68" width="18" height="18" fill="white"/>
+              <rect x="18" y="72" width="10" height="10" fill="black"/>
+              <!-- Data patterns -->
+              <rect x="42" y="12" width="6" height="6" fill="black"/>
+              <rect x="52" y="18" width="6" height="6" fill="black"/>
+              <rect x="42" y="30" width="6" height="6" fill="black"/>
+              <rect x="50" y="38" width="6" height="6" fill="black"/>
+              <rect x="66" y="46" width="6" height="6" fill="black"/>
+              <rect x="76" y="56" width="6" height="6" fill="black"/>
+              <rect x="44" y="66" width="6" height="6" fill="black"/>
+              <rect x="54" y="76" width="6" height="6" fill="black"/>
+              <rect x="68" y="80" width="6" height="6" fill="black"/>
+              <rect x="80" y="72" width="6" height="6" fill="black"/>
+            </svg>
+          </div>
+          <div class="qr-label-panel">
+            <h3>SCORE REPORT</h3>
+            <p>Certified biometric scorecard with high-resolution cephalometric angles & golden ratio.</p>
+            <div>
+              <a href="#analyzer" class="btn-slush btn-slush-white">
+                Open Analyzer
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div>
+          <a href="#top" class="brand-badge" style="margin-bottom: 12px;">
+            <span class="brand-logo-disc">TG</span>
+            Tool Genie
+          </a>
+          <p style="font-size: 14px; max-width: 320px; line-height: 1.5; color: var(--color-carbon);">
+            AI Full Face Analyzer measuring facial attractiveness, symmetry, golden ratio adherence, and aesthetic harmony.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Analyzer Suite</h4>
+          <ul>
+            <li><a href="#analyzer">Full Face Analyzer</a></li>
+            <li><a href="#tools">Facial Symmetry</a></li>
+            <li><a href="#tools">Golden Ratio (Φ)</a></li>
+            <li><a href="#tools">Jawline Gonial Angle</a></li>
+            <li><a href="#tools">Cheekbone Prominence</a></li>
+            <li><a href="#tools">Canthal Tilt</a></li>
+            <li><a href="#tools">Biological Age</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Pages & Science</h4>
+          <ul>
+            <li><a href="/blog">Biometrics Blog</a></li>
+            <li><a href="/contact">Contact Research Team</a></li>
+            <li><a href="#methodology">The Law of Thirds</a></li>
+            <li><a href="#methodology">Horizontal Fifths</a></li>
+            <li><a href="#methodology">Gonial Cephalometry</a></li>
+            <li><a href="#methodology">Divine Ratio Φ 1.618</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--color-carbon); font-size: 13px; font-weight: 700;">
+        &copy; 2026 Tool Genie — Built with Biometric Precision in the Slush Design System.
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast Element -->
+  <div class="slush-toast" id="siteToast">
+    <span id="toastMsg">Notification message</span>
+  </div>
+
+  <!-- Offscreen Canvas for Card PNG Generation -->
+  <canvas id="downloadCardCanvas" style="display:none"></canvas>
+
+  <!-- face-api.js for Real Client-Side Biometric Detection -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
+  <!-- Module Scripts -->
+  <script type="module">
+    import { initSlushRibbon } from '/src/ribbon.js';
+    import '/src/faceAnalyzer.js';
+
+    // Start 3D Inflatable Ribbon
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSlushRibbon);
+    } else {
+      initSlushRibbon();
+    }
+
+    // Drag and drop initialization
+    const dropZone = document.getElementById('dropZone');
+    if (dropZone) {
+      ['dragenter', 'dragover'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropZone.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach(name => {
+        dropZone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+        });
+      });
+      dropZone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          window.handleFileSelect({ target: { files: e.dataTransfer.files } });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
