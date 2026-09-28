@@ -54,4 +54,4 @@ User-agent: Meta-ExternalAgent
 Allow: /
 
 # Sitemap Location
-Sitemap: https://toolgenie.ai/sitemap.xml
+Sitemap: https://www.toolgenie.online/sitemap.xml
