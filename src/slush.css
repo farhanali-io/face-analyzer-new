@@ -2049,3 +2049,39 @@ body, html {
   }
 }
 
+/* ============================================
+   HERO CTA BUTTON — SUBTLE PULSING GLOW
+   ============================================ */
+.hero-button-row .btn-slush-black {
+  position: relative;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.4),
+              0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: heroCtaGlow 2.4s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-button-row .btn-slush-black:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.08),
+              0 12px 32px rgba(0, 0, 0, 0.28);
+  animation-play-state: paused;
+}
+
+@keyframes heroCtaGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.35),
+                0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0.06),
+                0 10px 30px rgba(0, 0, 0, 0.22);
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-button-row .btn-slush-black {
+    animation: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+}
