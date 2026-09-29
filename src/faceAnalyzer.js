@@ -1300,7 +1300,7 @@ export function downloadAnalysisCard() {
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
     ctx.fillText('TOOL GENIE • REAL CLIENT-SIDE FACE-API.JS BIOMETRICS • 100% PRIVATE', 80, 1418);
-    ctx.fillText('HTTP://TOOLGENIE.AI', 920, 1418);
+    ctx.fillText('WWW.TOOLGENIE.ONLINE', 920, 1418);
 
     try {
       const dataURL = canvas.toDataURL('image/png');
