@@ -12,11 +12,12 @@ let autoDetectTimer = null;
 let alignedStreak = 0;
 let countdownInterval = null;
 let isCountingDown = false;
+let currentFacingMode = 'user'; // 'user' = front, 'environment' = back
 
 let modelsReady = false;
 let modelsLoadError = null;
 
-// Helper to access faceapi (CDN script in window or NPM module)
+// Helper to access faceapi
 function getFaceApi() {
   if (typeof window !== 'undefined' && window.faceapi) {
     return window.faceapi;
@@ -27,7 +28,7 @@ function getFaceApi() {
   return faceapiNpm;
 }
 
-// Model Loading with error tracking
+// Model Loading
 export async function loadFaceModels() {
   const pill = document.getElementById('modelLoaderPill');
   const spinner = document.getElementById('modelLoaderSpinner');
@@ -66,7 +67,6 @@ export async function loadFaceModels() {
   }
 }
 
-// Call this once on page load — but do NOT block the UI
 loadFaceModels();
 
 // Toast Utility
@@ -125,7 +125,7 @@ export function handleContactSubmit(e) {
   showToast('Thanks for your note! Tool Genie research team has received it.');
 }
 
-// Input Mode Toggle (Upload vs Camera)
+// Input Mode Toggle
 export function switchInputMode(mode) {
   const tabUpload = document.getElementById('tabUpload');
   const tabCamera = document.getElementById('tabCamera');
@@ -156,7 +156,6 @@ export function switchInputMode(mode) {
       if (permPrompt) permPrompt.style.display = 'none';
       if (activeArea) activeArea.style.display = 'block';
 
-      // ✅ Reconnect existing stream (fixes black screen)
       if (video && video.srcObject !== webcamStream) {
         video.srcObject = webcamStream;
         if (video.readyState >= 2) {
@@ -169,7 +168,6 @@ export function switchInputMode(mode) {
       }
     }
 
-    // ✅ Auto-scroll to center camera preview
     setTimeout(() => {
       const cameraArea = document.getElementById('cameraActiveArea') || cameraCont;
       if (cameraArea) {
@@ -179,11 +177,10 @@ export function switchInputMode(mode) {
   }
 }
 
-// Live Camera
+// Request Camera Access
 export async function requestCameraAccess() {
   const video = document.getElementById('webcamVideo');
 
-  // ✅ If stream already active, reuse it — do NOT ask for permission again
   if (webcamStream && webcamStream.active) {
     if (video) {
       video.srcObject = webcamStream;
@@ -198,7 +195,6 @@ export async function requestCameraAccess() {
         video.onloadedmetadata = () => startAutoDetection();
       }
 
-      // ✅ Auto-scroll to camera preview
       setTimeout(() => {
         const cameraArea = document.getElementById('cameraActiveArea');
         if (cameraArea) {
@@ -212,7 +208,7 @@ export async function requestCameraAccess() {
   try {
     webcamStream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: 'user',
+        facingMode: { ideal: currentFacingMode },
         width: { ideal: 720 },
         height: { ideal: 960 }
       },
@@ -220,6 +216,14 @@ export async function requestCameraAccess() {
     });
     if (video) {
       video.srcObject = webcamStream;
+
+      // Apply correct mirror based on current camera
+      if (currentFacingMode === 'user') {
+        video.style.transform = 'scaleX(-1)';
+      } else {
+        video.style.transform = 'scaleX(1)';
+      }
+
       video.onloadedmetadata = () => {
         const permPrompt = document.getElementById('cameraPermissionPrompt');
         const activeArea = document.getElementById('cameraActiveArea');
@@ -227,7 +231,6 @@ export async function requestCameraAccess() {
         if (activeArea) activeArea.style.display = 'block';
         startAutoDetection();
 
-        // ✅ Auto-scroll to camera preview
         setTimeout(() => {
           const cameraArea = document.getElementById('cameraActiveArea');
           if (cameraArea) {
@@ -240,6 +243,99 @@ export async function requestCameraAccess() {
     console.error('Camera access error:', err);
     showToast('Camera access unavailable. You can upload a photo or use demo portraits instead.');
     switchInputMode('upload');
+  }
+}
+
+// ✅ Switch between front and back camera
+export async function switchCamera() {
+  const video = document.getElementById('webcamVideo');
+  const flipBtn = document.getElementById('cameraFlipBtn');
+
+  if (!video) return;
+
+  // Disable button during switch
+  if (flipBtn) {
+    flipBtn.disabled = true;
+    flipBtn.style.opacity = '0.5';
+  }
+
+  stopAutoDetection();
+
+  // Toggle facing mode
+  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+
+  // Stop current stream
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(track => track.stop());
+    webcamStream = null;
+  }
+
+  try {
+    webcamStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: currentFacingMode },
+        width: { ideal: 720 },
+        height: { ideal: 960 }
+      },
+      audio: false
+    });
+
+    video.srcObject = webcamStream;
+
+    // Mirror only for front camera
+    if (currentFacingMode === 'user') {
+      video.style.transform = 'scaleX(-1)';
+    } else {
+      video.style.transform = 'scaleX(1)';
+    }
+
+    video.onloadedmetadata = () => {
+      video.play().catch(() => {});
+      setTimeout(() => {
+        startAutoDetection();
+
+        const pill = document.getElementById('cameraAlignmentPill');
+        const statusText = document.getElementById('cameraStatusText');
+        if (pill) pill.classList.remove('aligned');
+        if (statusText) statusText.textContent = 'Align your face inside the grid';
+      }, 300);
+    };
+
+    if (flipBtn) {
+      flipBtn.disabled = false;
+      flipBtn.style.opacity = '1';
+    }
+
+    showToast(currentFacingMode === 'user' ? 'Front camera' : 'Back camera');
+
+  } catch (err) {
+    console.error('Camera switch failed:', err);
+
+    // Revert facing mode
+    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+
+    showToast('Could not switch camera. Your device may not have multiple cameras.');
+
+    if (flipBtn) {
+      flipBtn.disabled = false;
+      flipBtn.style.opacity = '1';
+    }
+
+    // Restore original camera
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: currentFacingMode } },
+        audio: false
+      });
+      video.srcObject = webcamStream;
+      video.onloadedmetadata = () => {
+        video.play().catch(() => {});
+        startAutoDetection();
+      };
+    } catch (restoreErr) {
+      console.error('Could not restore camera:', restoreErr);
+      showClarityError('Camera unavailable. Please refresh the page and try again.');
+    }
   }
 }
 
@@ -313,7 +409,6 @@ function startAutoDetection() {
       const pill = document.getElementById('cameraAlignmentPill');
       const statusText = document.getElementById('cameraStatusText');
 
-      // ✅ Face center check
       let isCentered = true;
       if (facePixelCount > 20) {
         faceCenterX = faceCenterX / facePixelCount;
@@ -402,8 +497,13 @@ export function captureLiveSnapshot() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext('2d');
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
+
+  // Mirror only for front camera
+  if (currentFacingMode === 'user') {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.94);
@@ -472,7 +572,6 @@ function validateClientClarity(img) {
 }
 
 function showClarityError(msg) {
-  // ✅ STOP detection immediately — no more auto-shots
   stopAutoDetection();
 
   document.getElementById('scanningOverlay')?.style.setProperty('display', 'none');
@@ -481,8 +580,6 @@ function showClarityError(msg) {
   const inputArea = document.getElementById('analyzerInputArea');
   if (inputArea) inputArea.style.display = 'block';
 
-  // ✅ HIDE the live camera preview bar after error
-  // (user must click "Analyze Again" to bring it back)
   if (webcamStream && webcamStream.active) {
     const cameraActiveArea = document.getElementById('cameraActiveArea');
     const permPrompt = document.getElementById('cameraPermissionPrompt');
@@ -491,13 +588,11 @@ function showClarityError(msg) {
     if (permPrompt) permPrompt.style.display = 'none';
   }
 
-  // Reset alignment pill state
   const pill = document.getElementById('cameraAlignmentPill');
   const statusText = document.getElementById('cameraStatusText');
   if (pill) pill.classList.remove('aligned');
   if (statusText) statusText.textContent = 'Align your face inside the grid';
 
-  // Show the error card
   const errorCard = document.getElementById('clarityErrorCard');
   const errorDesc = document.getElementById('clarityErrorDesc');
   if (errorDesc && msg) errorDesc.textContent = msg;
@@ -513,13 +608,10 @@ export function hideClarityError() {
 }
 
 export function retryScan() {
-  // Restore camera preview + restart detection via resetAnalyzer()
-  // resetAnalyzer() already handles: hide error card, show camera,
-  // reconnect stream, restart auto-detection, scroll back to analyzer.
   resetAnalyzer();
 }
 
-// File Reading & Drag & Drop
+// File Reading
 export function handleFileSelect(e) {
   if (e.target.files && e.target.files[0]) {
     readFile(e.target.files[0]);
@@ -538,7 +630,7 @@ export function readFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Built-in Demo Portraits
+// Demo Portraits
 export function loadSample(type) {
   hideClarityError();
   const url = type === 'female' ? '/female.jpg' : '/male.jpg';
@@ -549,7 +641,7 @@ export function loadSample(type) {
 export function buildResultFromLandmarks(landmarks, realAge, realGender, detection) {
   const pts = landmarks;
 
-  // 1. Facial Symmetry
+  // 1. Symmetry
   let sumX = 0;
   for (let i = 0; i < pts.length; i++) {
     sumX += pts[i].x;
@@ -771,7 +863,6 @@ export async function runFullFaceAnalysis(imageDataUrl) {
     if (scanOverlay) scanOverlay.style.display = 'block';
     if (scanImg) scanImg.src = imageDataUrl;
 
-    // ✅ Auto-scroll to center scanning image
     setTimeout(() => {
       if (scanOverlay) {
         scanOverlay.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -822,7 +913,7 @@ export async function runFullFaceAnalysis(imageDataUrl) {
   testImg.src = imageDataUrl;
 }
 
-// Display Analysis Results
+// Display Results
 function displayAnalysisResults(data, imgDataUrl) {
   if (!data) {
     showClarityError('Analysis could not be completed. Please try again.');
@@ -924,7 +1015,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     };
   }
 
-  // ✅ Auto-scroll to result dashboard with delay
   setTimeout(() => {
     if (resultDash) {
       resultDash.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1091,7 +1181,6 @@ export function resetAnalyzer() {
   const fileInput = document.getElementById('fileInput');
   if (fileInput) fileInput.value = '';
 
-  // ✅ CAMERA RESTART: If stream is alive, fully restore camera mode
   if (webcamStream && webcamStream.active) {
     const video = document.getElementById('webcamVideo');
     const cameraCont = document.getElementById('cameraContainer');
@@ -1102,7 +1191,6 @@ export function resetAnalyzer() {
     const permPrompt = document.getElementById('cameraPermissionPrompt');
 
     if (cameraCont && cameraActiveArea && video) {
-      // Force camera mode visible
       if (uploadCont) uploadCont.style.display = 'none';
       if (cameraCont) cameraCont.style.display = 'block';
       if (tabUpload) tabUpload.classList.remove('active');
@@ -1111,12 +1199,10 @@ export function resetAnalyzer() {
       if (permPrompt) permPrompt.style.display = 'none';
       cameraActiveArea.style.display = 'block';
 
-      // Reconnect stream if detached
       if (video.srcObject !== webcamStream) {
         video.srcObject = webcamStream;
       }
 
-      // Resume playback + restart detection
       setTimeout(() => {
         try {
           if (video.paused) {
@@ -1130,7 +1216,6 @@ export function resetAnalyzer() {
           video.onloadedmetadata = () => startAutoDetection();
         }
 
-        // Reset alignment pill
         const pill = document.getElementById('cameraAlignmentPill');
         const statusText = document.getElementById('cameraStatusText');
         if (pill) pill.classList.remove('aligned');
@@ -1139,19 +1224,15 @@ export function resetAnalyzer() {
     }
   }
 
-  // ✅ Auto-scroll directly to camera preview (mobile-friendly centering)
   setTimeout(() => {
     const cameraActiveArea = document.getElementById('cameraActiveArea');
     const analyzer = document.getElementById('analyzer');
 
-    // If camera mode is active, scroll directly to the preview
     if (cameraActiveArea && cameraActiveArea.style.display !== 'none' && webcamStream && webcamStream.active) {
       const rect = cameraActiveArea.getBoundingClientRect();
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const elementHeight = rect.height;
       const viewportHeight = window.innerHeight;
-
-      // Center the camera preview in the viewport
       const targetY = scrollTop + rect.top - (viewportHeight / 2) + (elementHeight / 2);
 
       window.scrollTo({
@@ -1159,12 +1240,10 @@ export function resetAnalyzer() {
         behavior: 'smooth'
       });
     } else if (analyzer) {
-      // Otherwise scroll to top of analyzer section
       analyzer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, 400);
 }
-
 
 // DOWNLOADABLE SCORECARD GENERATOR
 export function downloadAnalysisCard() {
@@ -1323,7 +1402,7 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
   context.fillText(line, x, y);
 }
 
-// Global window bindings for inline HTML event handlers
+// Global window bindings
 window.openDrawer = openDrawer;
 window.closeDrawer = closeDrawer;
 window.openContactModal = openContactModal;
@@ -1331,6 +1410,7 @@ window.closeContactModal = closeContactModal;
 window.handleContactSubmit = handleContactSubmit;
 window.switchInputMode = switchInputMode;
 window.requestCameraAccess = requestCameraAccess;
+window.switchCamera = switchCamera;
 window.captureLiveSnapshot = captureLiveSnapshot;
 window.retryScan = retryScan;
 window.handleFileSelect = handleFileSelect;
