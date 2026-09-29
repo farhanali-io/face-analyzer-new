@@ -1,4 +1,3 @@
-         
 import * as faceapiNpm from '@vladmandic/face-api';
 
 // Full Face Analyzer & Biometric Engine
@@ -24,9 +23,6 @@ function getFaceApi() {
   }
   if (faceapiNpm && faceapiNpm.nets) {
     return faceapiNpm;
-  }
-  if (faceapiNpm && faceapiNpm.default && faceapiNpm.default.nets) {
-    return faceapiNpm.default;
   }
   return faceapiNpm;
 }
@@ -106,7 +102,7 @@ export function closeDrawer() {
   }
 }
 
-// Contact Modal Controls (if used)
+// Contact Modal Controls
 export function openContactModal() {
   const modal = document.getElementById('contactModal');
   if (modal) {
@@ -149,23 +145,70 @@ export function switchInputMode(mode) {
     if (uploadCont) uploadCont.style.display = 'none';
     if (cameraCont) cameraCont.style.display = 'block';
 
-    if (!webcamStream) {
-      const permPrompt = document.getElementById('cameraPermissionPrompt');
-      const activeArea = document.getElementById('cameraActiveArea');
+    const permPrompt = document.getElementById('cameraPermissionPrompt');
+    const activeArea = document.getElementById('cameraActiveArea');
+    const video = document.getElementById('webcamVideo');
+
+    if (!webcamStream || !webcamStream.active) {
       if (permPrompt) permPrompt.style.display = 'block';
       if (activeArea) activeArea.style.display = 'none';
     } else {
-      const permPrompt = document.getElementById('cameraPermissionPrompt');
-      const activeArea = document.getElementById('cameraActiveArea');
       if (permPrompt) permPrompt.style.display = 'none';
       if (activeArea) activeArea.style.display = 'block';
+
+      // ✅ Reconnect existing stream (fixes black screen)
+      if (video && video.srcObject !== webcamStream) {
+        video.srcObject = webcamStream;
+        if (video.readyState >= 2) {
+          startAutoDetection();
+        } else {
+          video.onloadedmetadata = () => startAutoDetection();
+        }
+      } else if (video && video.readyState >= 2) {
+        startAutoDetection();
+      }
     }
+
+    // ✅ Auto-scroll to center camera preview
+    setTimeout(() => {
+      const cameraArea = document.getElementById('cameraActiveArea') || cameraCont;
+      if (cameraArea) {
+        cameraArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 400);
   }
 }
 
 // Live Camera
 export async function requestCameraAccess() {
   const video = document.getElementById('webcamVideo');
+
+  // ✅ If stream already active, reuse it — do NOT ask for permission again
+  if (webcamStream && webcamStream.active) {
+    if (video) {
+      video.srcObject = webcamStream;
+      const permPrompt = document.getElementById('cameraPermissionPrompt');
+      const activeArea = document.getElementById('cameraActiveArea');
+      if (permPrompt) permPrompt.style.display = 'none';
+      if (activeArea) activeArea.style.display = 'block';
+
+      if (video.readyState >= 2) {
+        startAutoDetection();
+      } else {
+        video.onloadedmetadata = () => startAutoDetection();
+      }
+
+      // ✅ Auto-scroll to camera preview
+      setTimeout(() => {
+        const cameraArea = document.getElementById('cameraActiveArea');
+        if (cameraArea) {
+          cameraArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+    return;
+  }
+
   try {
     webcamStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -183,6 +226,14 @@ export async function requestCameraAccess() {
         if (permPrompt) permPrompt.style.display = 'none';
         if (activeArea) activeArea.style.display = 'block';
         startAutoDetection();
+
+        // ✅ Auto-scroll to camera preview
+        setTimeout(() => {
+          const cameraArea = document.getElementById('cameraActiveArea');
+          if (cameraArea) {
+            cameraArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
       };
     }
   } catch (err) {
@@ -231,19 +282,28 @@ function startAutoDetection() {
       let totalLum = 0;
       let skinPixels = 0;
       let sampleCount = 0;
+      let faceCenterX = 0;
+      let faceCenterY = 0;
+      let facePixelCount = 0;
 
-      for (let y = 50; y < 160; y += 4) {
-        for (let x = 40; x < 120; x += 4) {
+      for (let y = 0; y < 213; y += 4) {
+        for (let x = 0; x < 160; x += 4) {
           const idx = (y * 160 + x) * 4;
           const r = data[idx];
           const g = data[idx + 1];
           const b = data[idx + 2];
           const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-          totalLum += lum;
-          sampleCount++;
+
+          if (y >= 50 && y < 160 && x >= 40 && x < 120) {
+            totalLum += lum;
+            sampleCount++;
+          }
 
           if (r > 55 && g > 38 && b > 25 && r > g && r > b && Math.abs(r - g) > 12) {
             skinPixels++;
+            faceCenterX += x;
+            faceCenterY += y;
+            facePixelCount++;
           }
         }
       }
@@ -253,7 +313,17 @@ function startAutoDetection() {
       const pill = document.getElementById('cameraAlignmentPill');
       const statusText = document.getElementById('cameraStatusText');
 
-      if (skinRatio >= 0.35 && avgLum >= 38 && avgLum <= 230) {
+      // ✅ Face center check
+      let isCentered = true;
+      if (facePixelCount > 20) {
+        faceCenterX = faceCenterX / facePixelCount;
+        faceCenterY = faceCenterY / facePixelCount;
+        const offsetX = Math.abs(faceCenterX - 80);
+        const offsetY = Math.abs(faceCenterY - 106);
+        isCentered = offsetX < 35 && offsetY < 45;
+      }
+
+      if (skinRatio >= 0.35 && avgLum >= 38 && avgLum <= 230 && isCentered) {
         alignedStreak++;
         if (alignedStreak >= 5) {
           pill?.classList.add('aligned');
@@ -264,6 +334,12 @@ function startAutoDetection() {
         } else {
           pill?.classList.add('aligned');
           if (statusText) statusText.textContent = '★ Face detected. Aligning...';
+        }
+      } else if (skinRatio >= 0.35 && avgLum >= 38 && avgLum <= 230 && !isCentered) {
+        alignedStreak = Math.max(0, alignedStreak - 1);
+        if (!isCountingDown) {
+          pill?.classList.remove('aligned');
+          if (statusText) statusText.textContent = '★ Face ko frame ke center mein layein';
         }
       } else {
         alignedStreak = Math.max(0, alignedStreak - 1);
@@ -331,11 +407,13 @@ export function captureLiveSnapshot() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.94);
-  stopWebcam();
+  
+  // ✅ CHANGE: Do NOT call stopWebcam() — keep stream alive for next scan
+  stopAutoDetection();
   runFullFaceAnalysis(dataUrl);
 }
 
-// Clarity Pre-validator (checks extreme blur, darkness, or glare)
+// Clarity Pre-validator
 function validateClientClarity(img) {
   const canvas = document.createElement('canvas');
   const w = Math.min(img.naturalWidth || 300, 320);
@@ -395,15 +473,12 @@ function validateClientClarity(img) {
 }
 
 function showClarityError(msg) {
-  // Hide only the scanning overlay and result dashboard
   document.getElementById('scanningOverlay')?.style.setProperty('display', 'none');
   document.getElementById('resultDashboard')?.style.setProperty('display', 'none');
 
-  // KEEP the input area visible — do NOT touch analyzerInputArea
   const inputArea = document.getElementById('analyzerInputArea');
   if (inputArea) inputArea.style.display = 'block';
 
-  // Show the error card ABOVE the input area
   const errorCard = document.getElementById('clarityErrorCard');
   const errorDesc = document.getElementById('clarityErrorDesc');
   if (errorDesc && msg) errorDesc.textContent = msg;
@@ -450,22 +525,18 @@ export function readFile(file) {
   reader.readAsDataURL(file);
 }
 
-// Built-in Demo Portraits:
-// Uses real photos saved in public/female.jpg and public/male.jpg
+// Built-in Demo Portraits
 export function loadSample(type) {
   hideClarityError();
   const url = type === 'female' ? '/female.jpg' : '/male.jpg';
   runFullFaceAnalysis(url);
 }
 
-// -------------------------------------------------------------
-// FIX 7 — BUILD RESULT FROM REAL LANDMARKS (Strictly zero random numbers)
-// -------------------------------------------------------------
+// Build Result From Real Landmarks
 export function buildResultFromLandmarks(landmarks, realAge, realGender, detection) {
-  const pts = landmarks; // Array of 68 {x, y} coordinates
+  const pts = landmarks;
 
-  // 1. TOOL 1 — Facial Symmetry:
-  // - Compare mirrored landmark pairs to the midline
+  // 1. Facial Symmetry
   let sumX = 0;
   for (let i = 0; i < pts.length; i++) {
     sumX += pts[i].x;
@@ -474,11 +545,11 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   const faceWidth = Math.max(1, Math.abs(pts[16].x - pts[0].x));
 
   const symmetricPairs = [
-    [0, 16], [1, 15], [2, 14], [3, 13], [4, 12], [5, 11], [6, 10], [7, 9], // jaw contour
-    [17, 26], [18, 25], [19, 24], [20, 23], [21, 22], // eyebrows
-    [36, 45], [37, 44], [38, 43], [39, 42], [40, 47], [41, 46], // eyes
-    [31, 35], [32, 34], // nose wings
-    [48, 54], [49, 53], [50, 52], [59, 55], [58, 56] // mouth
+    [0, 16], [1, 15], [2, 14], [3, 13], [4, 12], [5, 11], [6, 10], [7, 9],
+    [17, 26], [18, 25], [19, 24], [20, 23], [21, 22],
+    [36, 45], [37, 44], [38, 43], [39, 42], [40, 47], [41, 46],
+    [31, 35], [32, 34],
+    [48, 54], [49, 53], [50, 52], [59, 55], [58, 56]
   ];
 
   let totalSymDiff = 0;
@@ -491,8 +562,7 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   const devPct = (avgSymDiff / faceWidth) * 100;
   const symScore = Math.max(10, Math.min(100, Math.round(100 - devPct)));
 
-  // 2. TOOL 2 — Golden Ratio:
-  // - Measure the three vertical thirds
+  // 2. Golden Ratio
   const boxY = detection?.box?.y ?? detection?.detection?.box?.y ?? Math.max(0, pts[19].y - (pts[8].y - pts[19].y) * 0.35);
   const hairlineY = Math.max(0, boxY);
   let sumBrowY = 0;
@@ -516,8 +586,7 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   const phiScore = Math.max(10, Math.min(100, Math.round(100 - (varThirds * 3))));
   const thirdsRatioText = `${pct1.toFixed(0)}% / ${pct2.toFixed(0)}% / ${pct3.toFixed(0)}%`;
 
-  // 3. TOOL 3 — Jawline:
-  // - Gonial angle at landmarks 4 and 12
+  // 3. Jawline
   function calcAngle(p1, pCenter, p2) {
     const v1x = p1.x - pCenter.x;
     const v1y = p1.y - pCenter.y;
@@ -537,16 +606,14 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   const gonialDiff = Math.abs(avgGonialAngle - 120);
   const jawScore = Math.max(10, Math.min(100, Math.round(100 - (gonialDiff * 2.5))));
 
-  // 4. TOOL 4 — Cheekbones:
-  // - Width between landmarks 1 and 15
+  // 4. Cheekbones
   const cheekboneWidth = Math.hypot(pts[15].x - pts[1].x, pts[15].y - pts[1].y);
   const jawWidth = Math.max(1, Math.hypot(pts[11].x - pts[5].x, pts[11].y - pts[5].y));
   const cheekJawRatio = cheekboneWidth / jawWidth;
   const ratioDiff = Math.abs(cheekJawRatio - 1.30);
   const cheekScore = Math.max(10, Math.min(100, Math.round(100 - (ratioDiff * 70))));
 
-  // 5. TOOL 5 — Canthal Tilt:
-  // - Angle between landmarks 36 and 39
+  // 5. Canthal Tilt
   const dyLeft = pts[39].y - pts[36].y;
   const dxLeft = pts[39].x - pts[36].x;
   const leftTilt = Math.atan2(dyLeft, dxLeft) * (180 / Math.PI);
@@ -559,13 +626,11 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   const canthalScore = Math.max(10, Math.min(100, Math.round(85 + (avgTilt * 3))));
   const tiltTypeLabel = avgTilt >= 0.5 ? 'Positive' : avgTilt <= -0.5 ? 'Negative' : 'Neutral';
 
-  // 6. TOOL 6 — Biological Age:
-  // - Use detection.age directly
+  // 6. Biological Age
   const ageVal = Math.max(1, Math.round(realAge));
   const confidenceRange = `${Math.max(1, ageVal - 4)}–${ageVal + 4} yrs`;
   const skinVitality = Math.max(10, Math.min(100, Math.round(100 - Math.max(0, ageVal - 18) * 1.5)));
 
-  // Overall Attractiveness Score (Weighted harmonic synthesis)
   const overallScore = Math.max(10, Math.min(100, Math.round(
     symScore * 0.22 +
     phiScore * 0.22 +
@@ -651,14 +716,11 @@ export function buildResultFromLandmarks(landmarks, realAge, realGender, detecti
   };
 }
 
-// -------------------------------------------------------------
-// FIX 4 — REWRITE runFullFaceAnalysis() TO FAIL VISIBLY
-// -------------------------------------------------------------
+// Run Full Face Analysis
 export async function runFullFaceAnalysis(imageDataUrl) {
   currentImageBase64 = imageDataUrl;
   hideClarityError();
 
-  // Guard: models not ready
   if (modelsLoadError) {
     showClarityError('Face analysis engine failed to load. Please refresh the page and try again.');
     return;
@@ -680,14 +742,12 @@ export async function runFullFaceAnalysis(imageDataUrl) {
       height: testImg.naturalHeight || 750
     };
 
-    // Step 1: clarity check (existing function)
     const clarity = validateClientClarity(testImg);
     if (!clarity.valid) {
       showClarityError(clarity.error);
       return;
     }
 
-    // Step 2: show scanning overlay
     const inputArea = document.getElementById('analyzerInputArea');
     const resultDash = document.getElementById('resultDashboard');
     const scanOverlay = document.getElementById('scanningOverlay');
@@ -698,11 +758,17 @@ export async function runFullFaceAnalysis(imageDataUrl) {
     if (scanOverlay) scanOverlay.style.display = 'block';
     if (scanImg) scanImg.src = imageDataUrl;
 
+    // ✅ Auto-scroll to center scanning image
+    setTimeout(() => {
+      if (scanOverlay) {
+        scanOverlay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+
     const stepText = document.getElementById('scanStepText');
     if (stepText) stepText.textContent = 'Detecting facial coordinates and 68 landmarks...';
 
     try {
-      // Step 3: run face detection
       const api = getFaceApi();
       const detection = await api
         .detectSingleFace(testImg, new api.TinyFaceDetectorOptions({ inputSize: 512, scoreThreshold: 0.3 }))
@@ -716,7 +782,6 @@ export async function runFullFaceAnalysis(imageDataUrl) {
         return;
       }
 
-      // Step 4: build result object from REAL data
       const landmarks = detection.landmarks.positions;
       const realAge = Math.round(detection.age);
       const realGender = detection.gender;
@@ -744,9 +809,7 @@ export async function runFullFaceAnalysis(imageDataUrl) {
   testImg.src = imageDataUrl;
 }
 
-// -------------------------------------------------------------
-// FIX 6 — REMOVE ALL RANDOM NUMBER FALLBACKS
-// -------------------------------------------------------------
+// Display Analysis Results
 function displayAnalysisResults(data, imgDataUrl) {
   if (!data) {
     showClarityError('Analysis could not be completed. Please try again.');
@@ -758,7 +821,6 @@ function displayAnalysisResults(data, imgDataUrl) {
   const resultDash = document.getElementById('resultDashboard');
   if (resultDash) resultDash.style.display = 'block';
 
-  // Hero Score
   const scoreEl = document.getElementById('resAttractivenessScore');
   const tierEl = document.getElementById('resHarmonyTier');
   const summaryEl = document.getElementById('resSummaryText');
@@ -766,7 +828,6 @@ function displayAnalysisResults(data, imgDataUrl) {
   if (tierEl) tierEl.textContent = currentAnalysisData.harmonyTier || 'Exceptional Facial Harmony';
   if (summaryEl) summaryEl.textContent = currentAnalysisData.summary || '';
 
-  // 1. Symmetry
   if (currentAnalysisData.symmetry && currentAnalysisData.symmetry.score != null) {
     setMetric('resSymScore', 'barSym', 'resSymDetail', 'resSymPill', 
       `${currentAnalysisData.symmetry.score}%`,
@@ -778,7 +839,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resSymScore', 'barSym', 'resSymDetail', 'resSymPill', 'Unable to calculate', 0, 'Unable to calculate symmetry from landmarks.', 'N/A');
   }
 
-  // 2. Golden Ratio
   if (currentAnalysisData.goldenRatio && currentAnalysisData.goldenRatio.score != null) {
     setMetric('resPhiScore', 'barPhi', 'resPhiDetail', 'resPhiPill',
       `${currentAnalysisData.goldenRatio.score}%`,
@@ -790,7 +850,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resPhiScore', 'barPhi', 'resPhiDetail', 'resPhiPill', 'Unable to calculate', 0, 'Unable to calculate vertical thirds.', 'N/A');
   }
 
-  // 3. Jawline
   if (currentAnalysisData.jawline && currentAnalysisData.jawline.score != null) {
     setMetric('resJawScore', 'barJaw', 'resJawDetail', 'resJawPill',
       `${currentAnalysisData.jawline.score}%`,
@@ -802,7 +861,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resJawScore', 'barJaw', 'resJawDetail', 'resJawPill', 'Unable to calculate', 0, 'Unable to calculate jawline angle.', 'N/A');
   }
 
-  // 4. Cheekbones
   if (currentAnalysisData.cheekbones && currentAnalysisData.cheekbones.score != null) {
     setMetric('resCheekScore', 'barCheek', 'resCheekDetail', 'resCheekPill',
       `${currentAnalysisData.cheekbones.score}%`,
@@ -814,7 +872,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resCheekScore', 'barCheek', 'resCheekDetail', 'resCheekPill', 'Unable to calculate', 0, 'Unable to calculate cheekbone prominence.', 'N/A');
   }
 
-  // 5. Canthal Tilt
   if (currentAnalysisData.canthalTilt && currentAnalysisData.canthalTilt.score != null) {
     setMetric('resCanthalScore', 'barCanthal', 'resCanthalDetail', 'resCanthalPill',
       `${currentAnalysisData.canthalTilt.score}%`,
@@ -826,7 +883,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resCanthalScore', 'barCanthal', 'resCanthalDetail', 'resCanthalPill', 'Unable to calculate', 0, 'Unable to calculate canthal tilt.', 'N/A');
   }
 
-  // 6. Biological Age
   if (currentAnalysisData.biologicalAge && currentAnalysisData.biologicalAge.estimatedAge != null) {
     setMetric('resAgeScore', 'barAge', 'resAgeDetail', 'resAgePill',
       `${currentAnalysisData.biologicalAge.estimatedAge} yrs`,
@@ -838,7 +894,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     setMetric('resAgeScore', 'barAge', 'resAgeDetail', 'resAgePill', 'Unable to calculate', 0, 'Unable to estimate biological age.', 'N/A');
   }
 
-  // Strengths & Recommendations
   const strengthsList = document.getElementById('resStrengthsList');
   if (strengthsList && currentAnalysisData.keyStrengths) {
     strengthsList.innerHTML = currentAnalysisData.keyStrengths.map(s => `<li>★ ${s}</li>`).join('');
@@ -848,7 +903,6 @@ function displayAnalysisResults(data, imgDataUrl) {
     recList.innerHTML = currentAnalysisData.recommendations.map(r => `<li>★ ${r}</li>`).join('');
   }
 
-  // Result photo & landmark canvas
   const resultImg = document.getElementById('resultPhotoImg');
   if (resultImg) {
     resultImg.src = imgDataUrl;
@@ -857,7 +911,12 @@ function displayAnalysisResults(data, imgDataUrl) {
     };
   }
 
-  resultDash?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ✅ Auto-scroll to result dashboard with delay
+  setTimeout(() => {
+    if (resultDash) {
+      resultDash.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 300);
 }
 
 function setMetric(scoreId, barId, detailId, pillId, scoreTxt, barVal, detailTxt, pillTxt) {
@@ -871,7 +930,7 @@ function setMetric(scoreId, barId, detailId, pillId, scoreTxt, barVal, detailTxt
   if (p) p.textContent = pillTxt;
 }
 
-// Landmark Drawing with REAL coordinates
+// Landmark Drawing
 export function redrawLandmarkCanvas() {
   const img = document.getElementById('resultPhotoImg');
   const canvas = document.getElementById('landmarkOverlayCanvas');
@@ -889,7 +948,6 @@ export function redrawLandmarkCanvas() {
   const showSymmetry = document.getElementById('toggleSymmetry')?.checked ?? true;
   const showJaw = document.getElementById('toggleJaw')?.checked ?? true;
 
-  // Real scale factors from original image to canvas
   const imgW = currentImgDimensions.width || 600;
   const imgH = currentImgDimensions.height || 750;
   const scaleX = cw / imgW;
@@ -897,7 +955,6 @@ export function redrawLandmarkCanvas() {
 
   const pts = currentRealLandmarks;
 
-  // 1. Thirds
   if (showThirds) {
     ctx.strokeStyle = '#4da2ff';
     ctx.lineWidth = 2;
@@ -929,7 +986,6 @@ export function redrawLandmarkCanvas() {
     ctx.stroke();
   }
 
-  // 2. Symmetry
   if (showSymmetry) {
     ctx.setLineDash([]);
     ctx.strokeStyle = '#000000';
@@ -950,7 +1006,6 @@ export function redrawLandmarkCanvas() {
     ctx.lineTo(midX, botY);
     ctx.stroke();
 
-    // Eye axis line
     ctx.strokeStyle = '#55db9c';
     ctx.lineWidth = 2;
     let leftEye = { x: cw * 0.35, y: ch * 0.45 };
@@ -966,7 +1021,6 @@ export function redrawLandmarkCanvas() {
     ctx.lineTo(rightEye.x + 15, rightEye.y);
     ctx.stroke();
 
-    // Landmark markers
     ctx.fillStyle = '#55db9c';
     [leftEye, rightEye].forEach(pt => {
       ctx.beginPath();
@@ -978,14 +1032,12 @@ export function redrawLandmarkCanvas() {
     });
   }
 
-  // 3. Jaw
   if (showJaw) {
     ctx.setLineDash([]);
     ctx.strokeStyle = '#ffd731';
     ctx.lineWidth = 2.5;
 
     if (pts) {
-      // Connect real jaw points 0 to 16
       ctx.beginPath();
       ctx.moveTo(pts[0].x * scaleX, pts[0].y * scaleY);
       for (let i = 1; i <= 16; i++) {
@@ -993,7 +1045,6 @@ export function redrawLandmarkCanvas() {
       }
       ctx.stroke();
 
-      // Highlight gonion points 4, chin 8, and gonion 12
       ctx.fillStyle = '#ffd731';
       [pts[4], pts[8], pts[12]].forEach(pt => {
         ctx.beginPath();
@@ -1015,6 +1066,7 @@ export function redrawLandmarkCanvas() {
   }
 }
 
+// ✅ UPDATED: Reset analyzer with camera restart
 export function resetAnalyzer() {
   const resultDash = document.getElementById('resultDashboard');
   const inputArea = document.getElementById('analyzerInputArea');
@@ -1022,7 +1074,33 @@ export function resetAnalyzer() {
   if (inputArea) inputArea.style.display = 'block';
   const fileInput = document.getElementById('fileInput');
   if (fileInput) fileInput.value = '';
-  document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // ✅ If camera stream is still alive, reconnect and restart detection
+  if (webcamStream && webcamStream.active) {
+    const video = document.getElementById('webcamVideo');
+    const cameraCont = document.getElementById('cameraContainer');
+    const uploadCont = document.getElementById('uploadContainer');
+    const tabUpload = document.getElementById('tabUpload');
+    const tabCamera = document.getElementById('tabCamera');
+
+    if (cameraCont && cameraCont.style.display !== 'none') {
+      if (video) {
+        if (video.srcObject !== webcamStream) {
+          video.srcObject = webcamStream;
+        }
+        if (video.readyState >= 2) {
+          startAutoDetection();
+        } else {
+          video.onloadedmetadata = () => startAutoDetection();
+        }
+      }
+    }
+  }
+
+  // ✅ Auto-scroll back to analyzer
+  setTimeout(() => {
+    document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 // DOWNLOADABLE SCORECARD GENERATOR
@@ -1038,16 +1116,13 @@ export function downloadAnalysisCard() {
   canvas.height = 1500;
   const ctx = canvas.getContext('2d');
 
-  // Slush Pastel Sky Wash Card Canvas
   ctx.fillStyle = '#dceeff';
   ctx.fillRect(0, 0, 1200, 1500);
 
-  // Outer Black Hand-Cut Border
   ctx.strokeStyle = '#000000';
   ctx.lineWidth = 6;
   ctx.strokeRect(30, 30, 1140, 1440);
 
-  // Header Banner Box
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(50, 50, 1100, 110);
   ctx.strokeRect(50, 50, 1100, 110);
@@ -1063,7 +1138,6 @@ export function downloadAnalysisCard() {
   const userImg = new Image();
   userImg.crossOrigin = 'anonymous';
   userImg.onload = () => {
-    // User Photo Card
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(50, 180, 480, 580);
     ctx.strokeRect(50, 180, 480, 580);
@@ -1079,7 +1153,6 @@ export function downloadAnalysisCard() {
     ctx.lineWidth = 3;
     ctx.strokeRect(70, 200, 440, 540);
 
-    // Attractiveness Score Card
     ctx.fillStyle = '#e9ccff';
     ctx.fillRect(560, 180, 590, 580);
     ctx.strokeRect(560, 180, 590, 580);
@@ -1088,14 +1161,12 @@ export function downloadAnalysisCard() {
     ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
     ctx.fillText('OVERALL AESTHETIC HARMONY SCORE', 600, 240);
 
-    // Real score
     ctx.font = '900 115px "Plus Jakarta Sans", sans-serif';
     ctx.fillText(`${currentAnalysisData.attractivenessScore}`, 600, 360);
 
     ctx.font = 'bold 34px "Plus Jakarta Sans", sans-serif';
     ctx.fillText('/ 100', 740, 360);
 
-    // Tier badge
     ctx.fillStyle = '#55db9c';
     ctx.fillRect(600, 395, 470, 44);
     ctx.strokeRect(600, 395, 470, 44);
@@ -1107,7 +1178,6 @@ export function downloadAnalysisCard() {
     ctx.font = '19px "Plus Jakarta Sans", sans-serif';
     wrapText(ctx, currentAnalysisData.summary || '', 600, 485, 510, 30);
 
-    // The 6 Tool Cards Grid
     const tools = [
       { title: '1. Facial Symmetry', score: `${currentAnalysisData.symmetry.score}%`, desc: currentAnalysisData.symmetry.details, bg: '#ffffff' },
       { title: '2. Golden Ratio (Φ)', score: `${currentAnalysisData.goldenRatio.score}%`, desc: currentAnalysisData.goldenRatio.phiDeviation, bg: '#ffd731' },
@@ -1145,7 +1215,6 @@ export function downloadAnalysisCard() {
       wrapText(ctx, tool.desc, x + 18, y + 115, cardW - 36, 22);
     });
 
-    // Footer Watermark
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(50, 1370, 1100, 80);
     ctx.strokeRect(50, 1370, 1100, 80);
