@@ -132,6 +132,13 @@
   </script>
 
   <link rel="stylesheet" href="/src/slush.css" />
+  <!-- ✅ Clear URL hash on page load so homepage always opens at top -->
+  <script>
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      window.scrollTo(0, 0);
+    }
+  </script>
 </head>
 <body>
   <!-- 3D Electric Blue Inflatable Ribbon Canvas -->
