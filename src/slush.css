@@ -1402,3 +1402,13 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/* ✅ Fix Snap Photo Now button click */
+.camera-grid-layer > div {
+  pointer-events: auto;
+}
+
+.camera-grid-layer button {
+  pointer-events: auto;
+  cursor: pointer;
+}
