@@ -1163,6 +1163,8 @@ export function resetAnalyzer() {
       analyzer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, 400);
+}
+
 
 // DOWNLOADABLE SCORECARD GENERATOR
 export function downloadAnalysisCard() {
