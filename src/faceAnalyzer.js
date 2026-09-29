@@ -1139,11 +1139,30 @@ export function resetAnalyzer() {
     }
   }
 
-  // Auto-scroll back to analyzer
+  // ✅ Auto-scroll directly to camera preview (mobile-friendly centering)
   setTimeout(() => {
-    document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 350);
-}
+    const cameraActiveArea = document.getElementById('cameraActiveArea');
+    const analyzer = document.getElementById('analyzer');
+
+    // If camera mode is active, scroll directly to the preview
+    if (cameraActiveArea && cameraActiveArea.style.display !== 'none' && webcamStream && webcamStream.active) {
+      const rect = cameraActiveArea.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const elementHeight = rect.height;
+      const viewportHeight = window.innerHeight;
+
+      // Center the camera preview in the viewport
+      const targetY = scrollTop + rect.top - (viewportHeight / 2) + (elementHeight / 2);
+
+      window.scrollTo({
+        top: Math.max(0, targetY),
+        behavior: 'smooth'
+      });
+    } else if (analyzer) {
+      // Otherwise scroll to top of analyzer section
+      analyzer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 400);
 
 // DOWNLOADABLE SCORECARD GENERATOR
 export function downloadAnalysisCard() {
