@@ -472,62 +472,32 @@ function validateClientClarity(img) {
 }
 
 function showClarityError(msg) {
+  // ✅ STOP detection immediately — no more auto-shots
+  stopAutoDetection();
+
   document.getElementById('scanningOverlay')?.style.setProperty('display', 'none');
   document.getElementById('resultDashboard')?.style.setProperty('display', 'none');
 
   const inputArea = document.getElementById('analyzerInputArea');
   if (inputArea) inputArea.style.display = 'block';
 
-  // ✅ CAMERA RECOVERY: If camera stream is alive, restore it fully
+  // ✅ HIDE the live camera preview bar after error
+  // (user must click "Analyze Again" to bring it back)
   if (webcamStream && webcamStream.active) {
-    const video = document.getElementById('webcamVideo');
-    const cameraCont = document.getElementById('cameraContainer');
     const cameraActiveArea = document.getElementById('cameraActiveArea');
-    const uploadCont = document.getElementById('uploadContainer');
-    const tabUpload = document.getElementById('tabUpload');
-    const tabCamera = document.getElementById('tabCamera');
     const permPrompt = document.getElementById('cameraPermissionPrompt');
 
-    if (cameraCont && cameraActiveArea && video) {
-      // Show camera mode
-      if (uploadCont) uploadCont.style.display = 'none';
-      if (cameraCont) cameraCont.style.display = 'block';
-      if (tabUpload) tabUpload.classList.remove('active');
-      if (tabCamera) tabCamera.classList.add('active');
-
-      // Hide permission prompt, show live preview
-      if (permPrompt) permPrompt.style.display = 'none';
-      cameraActiveArea.style.display = 'block';
-
-      // Reconnect stream if detached
-      if (video.srcObject !== webcamStream) {
-        video.srcObject = webcamStream;
-      }
-
-      // ✅ Resume video playback (browser pauses hidden videos)
-      setTimeout(() => {
-        try {
-          if (video.paused) {
-            video.play().catch(() => {});
-          }
-        } catch (_) {}
-
-        // ✅ Restart auto-detection grid
-        if (video.readyState >= 2) {
-          startAutoDetection();
-        } else {
-          video.onloadedmetadata = () => startAutoDetection();
-        }
-
-        // Reset alignment pill state
-        const pill = document.getElementById('cameraAlignmentPill');
-        const statusText = document.getElementById('cameraStatusText');
-        if (pill) pill.classList.remove('aligned');
-        if (statusText) statusText.textContent = 'Align your face inside the grid';
-      }, 250);
-    }
+    if (cameraActiveArea) cameraActiveArea.style.display = 'none';
+    if (permPrompt) permPrompt.style.display = 'none';
   }
 
+  // Reset alignment pill state
+  const pill = document.getElementById('cameraAlignmentPill');
+  const statusText = document.getElementById('cameraStatusText');
+  if (pill) pill.classList.remove('aligned');
+  if (statusText) statusText.textContent = 'Align your face inside the grid';
+
+  // Show the error card
   const errorCard = document.getElementById('clarityErrorCard');
   const errorDesc = document.getElementById('clarityErrorDesc');
   if (errorDesc && msg) errorDesc.textContent = msg;
@@ -543,16 +513,10 @@ export function hideClarityError() {
 }
 
 export function retryScan() {
-  hideClarityError();
-  const inputArea = document.getElementById('analyzerInputArea');
-  if (inputArea) inputArea.style.display = 'block';
-  const resultDash = document.getElementById('resultDashboard');
-  if (resultDash) resultDash.style.display = 'none';
-  const scanOverlay = document.getElementById('scanningOverlay');
-  if (scanOverlay) scanOverlay.style.display = 'none';
-  const fileInput = document.getElementById('fileInput');
-  if (fileInput) fileInput.value = '';
-  document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Restore camera preview + restart detection via resetAnalyzer()
+  // resetAnalyzer() already handles: hide error card, show camera,
+  // reconnect stream, restart auto-detection, scroll back to analyzer.
+  resetAnalyzer();
 }
 
 // File Reading & Drag & Drop
