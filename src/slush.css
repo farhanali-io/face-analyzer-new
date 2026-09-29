@@ -1257,3 +1257,124 @@ a {
     justify-content: center !important;
   }
 }
+
+/* ============================================
+   CAMERA PREVIEW CENTERING FIX
+   ============================================ */
+#cameraActiveArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 auto;
+  scroll-margin-top: 100px;
+  scroll-margin-bottom: 40px;
+}
+
+#webcamVideo {
+  max-width: 100%;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: block;
+  border-radius: var(--radius-card-sm);
+  object-fit: cover;
+  aspect-ratio: 3 / 4;
+  background: #000;
+}
+
+/* ============================================
+   SCANNING OVERLAY CENTERING FIX
+   ============================================ */
+#scanningOverlay {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 auto;
+  scroll-margin-top: 100px;
+  scroll-margin-bottom: 60px;
+}
+
+#scanningOverlay[style*="block"] {
+  display: flex !important;
+}
+
+#scanningImgPreview {
+  max-width: 100%;
+  width: auto;
+  max-height: 500px;
+  margin: 0 auto;
+  display: block;
+  border-radius: var(--radius-card-sm);
+  object-fit: contain;
+}
+
+/* ============================================
+   ANALYZER INPUT AREA CENTERING
+   ============================================ */
+#analyzerInputArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+#analyzerInputArea > * {
+  width: 100%;
+}
+
+/* ============================================
+   RESULT DASHBOARD SCROLL FIX
+   ============================================ */
+#resultDashboard {
+  scroll-margin-top: 80px;
+  scroll-margin-bottom: 60px;
+}
+
+#resultPhotoImg {
+  max-width: 100%;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+}
+
+/* ============================================
+   CAMERA CONTAINER CENTERING
+   ============================================ */
+#cameraContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+#cameraPermissionPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  padding: 32px 20px;
+}
+
+/* ============================================
+   SMOOTH SCROLL BEHAVIOUR (already exists but ensure)
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
