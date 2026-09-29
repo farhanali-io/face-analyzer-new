@@ -407,15 +407,62 @@
                     </svg>
 
                     <!-- Auto-Capture Countdown -->
-                    <div class="countdown-sticker" id="cameraCountdownBadge" style="display:none">
-                      <span id="countdownNumber">3</span>
-                    </div>
+<div class="countdown-sticker" id="cameraCountdownBadge" style="display:none">
+  <span id="countdownNumber">3</span>
+</div>
 
-                    <div style="position:relative; z-index:5; pointer-events:auto;">
-                     <button type="button" class="btn-slush btn-slush-white" onclick="captureLiveSnapshot()" style="padding: 7px 18px; font-size: 13px;">
-                      📸 Snap Photo Now
-                    </button>
-                   </div>
+<!-- ✅ Camera Flip / Rotate Button (Top Right Corner) -->
+<button
+  type="button"
+  id="cameraFlipBtn"
+  onclick="switchCamera()"
+  aria-label="Switch camera"
+  title="Switch camera"
+  style="
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--color-paper-white);
+    border: 1.5px solid var(--color-carbon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    pointer-events: auto;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  "
+  onmouseover="this.style.transform='rotate(180deg) scale(1.08)'"
+  onmouseout="this.style.transform='rotate(0deg) scale(1)'"
+>
+  <svg
+    viewBox="0 0 24 24"
+    width="20"
+    height="20"
+    fill="none"
+    stroke="var(--color-carbon)"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-6.36-2.64"></path>
+    <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 6.36 2.64"></path>
+    <polyline points="21 3 21 9 15 9"></polyline>
+    <polyline points="3 21 3 15 9 15"></polyline>
+  </svg>
+</button>
+
+<!-- Snap Photo Now Button -->
+<div style="position:relative; z-index:5; pointer-events:auto;">
+  <button type="button" class="btn-slush btn-slush-white" onclick="captureLiveSnapshot()" style="padding: 7px 18px; font-size: 13px;">
+    📸 Snap Photo Now
+  </button>
+</div>
                   </div>
                 </div>
 
