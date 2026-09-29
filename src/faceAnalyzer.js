@@ -451,10 +451,10 @@ export function readFile(file) {
 }
 
 // Built-in Demo Portraits:
-// Uses real photos saved in /samples/female.jpg and /samples/male.jpg
+// Uses real photos saved in public/female.jpg and public/male.jpg
 export function loadSample(type) {
   hideClarityError();
-  const url = type === 'female' ? '/samples/female.jpg' : '/samples/male.jpg';
+  const url = type === 'female' ? '/female.jpg' : '/male.jpg';
   runFullFaceAnalysis(url);
 }
 
