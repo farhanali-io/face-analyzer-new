@@ -407,8 +407,7 @@ export function captureLiveSnapshot() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   const dataUrl = canvas.toDataURL('image/jpeg', 0.94);
-  
-  // ✅ CHANGE: Do NOT call stopWebcam() — keep stream alive for next scan
+
   stopAutoDetection();
   runFullFaceAnalysis(dataUrl);
 }
@@ -478,6 +477,56 @@ function showClarityError(msg) {
 
   const inputArea = document.getElementById('analyzerInputArea');
   if (inputArea) inputArea.style.display = 'block';
+
+  // ✅ CAMERA RECOVERY: If camera stream is alive, restore it fully
+  if (webcamStream && webcamStream.active) {
+    const video = document.getElementById('webcamVideo');
+    const cameraCont = document.getElementById('cameraContainer');
+    const cameraActiveArea = document.getElementById('cameraActiveArea');
+    const uploadCont = document.getElementById('uploadContainer');
+    const tabUpload = document.getElementById('tabUpload');
+    const tabCamera = document.getElementById('tabCamera');
+    const permPrompt = document.getElementById('cameraPermissionPrompt');
+
+    if (cameraCont && cameraActiveArea && video) {
+      // Show camera mode
+      if (uploadCont) uploadCont.style.display = 'none';
+      if (cameraCont) cameraCont.style.display = 'block';
+      if (tabUpload) tabUpload.classList.remove('active');
+      if (tabCamera) tabCamera.classList.add('active');
+
+      // Hide permission prompt, show live preview
+      if (permPrompt) permPrompt.style.display = 'none';
+      cameraActiveArea.style.display = 'block';
+
+      // Reconnect stream if detached
+      if (video.srcObject !== webcamStream) {
+        video.srcObject = webcamStream;
+      }
+
+      // ✅ Resume video playback (browser pauses hidden videos)
+      setTimeout(() => {
+        try {
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
+        } catch (_) {}
+
+        // ✅ Restart auto-detection grid
+        if (video.readyState >= 2) {
+          startAutoDetection();
+        } else {
+          video.onloadedmetadata = () => startAutoDetection();
+        }
+
+        // Reset alignment pill state
+        const pill = document.getElementById('cameraAlignmentPill');
+        const statusText = document.getElementById('cameraStatusText');
+        if (pill) pill.classList.remove('aligned');
+        if (statusText) statusText.textContent = 'Align your face inside the grid';
+      }, 250);
+    }
+  }
 
   const errorCard = document.getElementById('clarityErrorCard');
   const errorDesc = document.getElementById('clarityErrorDesc');
@@ -1066,41 +1115,70 @@ export function redrawLandmarkCanvas() {
   }
 }
 
-// ✅ UPDATED: Reset analyzer with camera restart
 export function resetAnalyzer() {
   const resultDash = document.getElementById('resultDashboard');
   const inputArea = document.getElementById('analyzerInputArea');
+  const errorCard = document.getElementById('clarityErrorCard');
+
   if (resultDash) resultDash.style.display = 'none';
   if (inputArea) inputArea.style.display = 'block';
+  if (errorCard) errorCard.style.display = 'none';
+
   const fileInput = document.getElementById('fileInput');
   if (fileInput) fileInput.value = '';
 
-  // ✅ If camera stream is still alive, reconnect and restart detection
+  // ✅ CAMERA RESTART: If stream is alive, fully restore camera mode
   if (webcamStream && webcamStream.active) {
     const video = document.getElementById('webcamVideo');
     const cameraCont = document.getElementById('cameraContainer');
+    const cameraActiveArea = document.getElementById('cameraActiveArea');
     const uploadCont = document.getElementById('uploadContainer');
     const tabUpload = document.getElementById('tabUpload');
     const tabCamera = document.getElementById('tabCamera');
+    const permPrompt = document.getElementById('cameraPermissionPrompt');
 
-    if (cameraCont && cameraCont.style.display !== 'none') {
-      if (video) {
-        if (video.srcObject !== webcamStream) {
-          video.srcObject = webcamStream;
-        }
+    if (cameraCont && cameraActiveArea && video) {
+      // Force camera mode visible
+      if (uploadCont) uploadCont.style.display = 'none';
+      if (cameraCont) cameraCont.style.display = 'block';
+      if (tabUpload) tabUpload.classList.remove('active');
+      if (tabCamera) tabCamera.classList.add('active');
+
+      if (permPrompt) permPrompt.style.display = 'none';
+      cameraActiveArea.style.display = 'block';
+
+      // Reconnect stream if detached
+      if (video.srcObject !== webcamStream) {
+        video.srcObject = webcamStream;
+      }
+
+      // Resume playback + restart detection
+      setTimeout(() => {
+        try {
+          if (video.paused) {
+            video.play().catch(() => {});
+          }
+        } catch (_) {}
+
         if (video.readyState >= 2) {
           startAutoDetection();
         } else {
           video.onloadedmetadata = () => startAutoDetection();
         }
-      }
+
+        // Reset alignment pill
+        const pill = document.getElementById('cameraAlignmentPill');
+        const statusText = document.getElementById('cameraStatusText');
+        if (pill) pill.classList.remove('aligned');
+        if (statusText) statusText.textContent = 'Align your face inside the grid';
+      }, 250);
     }
   }
 
-  // ✅ Auto-scroll back to analyzer
+  // Auto-scroll back to analyzer
   setTimeout(() => {
     document.getElementById('analyzer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
+  }, 350);
 }
 
 // DOWNLOADABLE SCORECARD GENERATOR
