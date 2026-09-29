@@ -1432,3 +1432,620 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/* =====================================================================
+   UNIFIED BEAUTY REPORT CARD
+   ===================================================================== */
+/* Ensure report card has clean layout during capture */
+.beauty-report {
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: #f8f6f2;
+  border: 1.5px solid #000000;
+  border-radius: 24px;
+  margin: 0 auto 36px;
+  padding: 36px 40px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+  font-family: var(--font-body);
+  color: #1a1a1a;
+  position: relative;
+}
+
+/* Ensure parent containers don't clip */
+#resultDashboard,
+.analyzer-master-card,
+.section-paper,
+.content-maxw {
+  overflow: visible !important;
+}
+
+/* Ensure SVG score ring has no transition during capture */
+.score-ring .ring-fill {
+  transition: none !important;
+}
+
+/* Desktop / capture-friendly layout: 16:9 ratio container */
+@media (min-width: 769px) {
+  .beauty-report {
+    aspect-ratio: auto;
+    max-width: 1100px;
+    margin: 0 auto 36px;
+  }
+}
+
+/* Prevent overflow:hidden on parents from clipping the clone */
+body, html {
+  overflow-x: visible !important;
+}
+
+/* When report is being captured, ensure it's fully visible */
+.beauty-report.capturing {
+  position: relative !important;
+  visibility: visible !important;
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #666666;
+  padding-bottom: 14px;
+  border-bottom: 1.5px solid #000000;
+  margin-bottom: 28px;
+}
+
+/* SECTION 1: HERO */
+.report-hero {
+  display: grid;
+  grid-template-columns: 35% 1fr;
+  gap: 28px;
+  margin-bottom: 28px;
+  align-items: start;
+}
+
+.report-photo-wrap {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid #000000;
+  background-color: #e8e5df;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.report-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.report-hero-info-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.report-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(28px, 4vw, 38px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.report-subtitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-bottom: 18px;
+}
+
+.report-block {
+  margin-top: 14px;
+}
+
+.report-block h3 {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #666666;
+  margin-bottom: 8px;
+}
+
+.report-info-line {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #222222;
+  margin-bottom: 4px;
+}
+
+.report-muted {
+  color: #777777;
+  font-size: 13.5px;
+}
+
+.report-impression-text {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #222222;
+  background: #ffffff;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e0ddd7;
+}
+
+/* SECTION 2: OVERALL SCORE + ATTRIBUTE BARS */
+.report-score-section {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 32px;
+  padding-top: 28px;
+  border-top: 1.5px solid #e0ddd7;
+  margin-bottom: 28px;
+  align-items: center;
+}
+
+.report-score-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.score-ring-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 14px;
+}
+
+.score-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  stroke: #e8e5df;
+  stroke-width: 8;
+  fill: none;
+}
+
+.ring-fill {
+  stroke: #1a1a1a;
+  stroke-width: 8;
+  fill: none;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s ease-out;
+}
+
+.score-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-text span:first-child {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  color: #1a1a1a;
+}
+
+.score-denominator {
+  font-size: 13px;
+  font-weight: 700;
+  color: #777777;
+  margin-top: 2px;
+}
+
+.rating-badge {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 6px 18px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.report-score-desc {
+  font-size: 12.5px;
+  color: #666666;
+  line-height: 1.45;
+  max-width: 240px;
+}
+
+.report-attrs-col {
+  padding-left: 8px;
+}
+
+.report-section-heading {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #666666;
+  margin-bottom: 14px;
+}
+
+.attr-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.attr-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+}
+
+.attr-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attr-bar {
+  height: 7px;
+  background-color: #e8e5df;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.attr-bar > div {
+  height: 100%;
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  transition: width 0.9s ease;
+}
+
+.attr-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: right;
+}
+
+/* SECTION 3: STRENGTHS & IMPROVEMENTS */
+.report-insights-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding-top: 28px;
+  border-top: 1.5px solid #e0ddd7;
+  margin-bottom: 28px;
+}
+
+.insights-col {
+  background-color: #ffffff;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border: 1.5px solid #e0ddd7;
+}
+
+.insights-heading {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.strengths-heading {
+  color: #1e6b42;
+}
+
+.improvements-heading {
+  color: #b35900;
+}
+
+.check-list, .circle-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.check-list li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #222222;
+}
+
+.check-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #1e6b42;
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.circle-list li {
+  position: relative;
+  padding-left: 24px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #222222;
+}
+
+.circle-list li::before {
+  content: "○";
+  position: absolute;
+  left: 0;
+  color: #888888;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* SECTION 4: GROOMING TIPS */
+.report-tips-section {
+  padding-top: 24px;
+  border-top: 1.5px solid #e0ddd7;
+  margin-bottom: 28px;
+}
+
+.tips-main-heading {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #666666;
+  margin-bottom: 16px;
+}
+
+.report-tips-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.tip-col {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #e4e1da;
+}
+
+.tip-col h4 {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #666666;
+  margin-bottom: 10px;
+}
+
+.tip-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-col li {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #444444;
+}
+
+/* SECTION 5: ACTIONS */
+.report-actions {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding-top: 24px;
+  border-top: 1.5px solid #e0ddd7;
+  margin-bottom: 24px;
+}
+
+.btn-report-dark {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  border: 1.5px solid #1a1a1a;
+  padding: 12px 26px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  font-family: var(--font-body);
+}
+
+.btn-report-dark:hover {
+  background-color: #000000;
+  transform: translateY(-1px);
+}
+
+.btn-report-white {
+  background-color: #ffffff;
+  color: #1a1a1a;
+  border: 1.5px solid #1a1a1a;
+  padding: 12px 26px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  font-family: var(--font-body);
+}
+
+.btn-report-white:hover {
+  background-color: #f0f0f0;
+  transform: translateY(-1px);
+}
+
+/* FOOTER */
+.report-footer {
+  text-align: center;
+  padding-top: 18px;
+  border-top: 1px solid #e0ddd7;
+}
+
+.report-footer-brand {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #777777;
+  margin-bottom: 4px;
+}
+
+.report-footer-date {
+  font-size: 11.5px;
+  color: #888888;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .beauty-report {
+    padding: 24px 18px;
+    border-radius: 18px;
+  }
+  .report-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .report-photo-wrap {
+    max-width: 260px;
+    margin: 0 auto;
+  }
+  .report-score-section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .report-attrs-col {
+    padding-left: 0;
+  }
+  .report-insights-row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .report-tips-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .report-actions {
+    flex-direction: column;
+  }
+  .btn-report-dark, .btn-report-white {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-tips-row {
+    grid-template-columns: 1fr;
+  }
+  .attr-row {
+    grid-template-columns: 120px 1fr 36px;
+    gap: 8px;
+  }
+}
+
+/* PRINT MEDIA */
+@media print {
+  body > * {
+    display: none !important;
+  }
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .page, .results-wrap, #resultDashboard, #beautyReport, #beautyReport * {
+    display: block !important;
+    visibility: visible !important;
+  }
+  .ribbon-canvas,
+  .marquee-bar,
+  .drawer,
+  .drawer-overlay,
+  .nav-wrap,
+  .section-hero,
+  .section-concrete,
+  footer,
+  .slush-toast,
+  #analyzerInputArea,
+  #scanningOverlay,
+  .report-actions,
+  .floating-sticker,
+  .samples-bar {
+    display: none !important;
+  }
+  .results-wrap {
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+  .beauty-report {
+    display: block !important;
+    position: static !important;
+    box-shadow: none !important;
+    border: 1px solid #cccccc !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+  .report-hero {
+    display: grid !important;
+    grid-template-columns: 35% 65% !important;
+  }
+  .report-score-section {
+    display: grid !important;
+    grid-template-columns: 40% 60% !important;
+  }
+  .report-insights-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .report-tips-row {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+

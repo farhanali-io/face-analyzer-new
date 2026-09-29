@@ -117,10 +117,10 @@
   }
   </script>
 
-  <!-- Google Fonts: Anton (Display / Lateral substitute) & Plus Jakarta Sans (UI / Aeonik substitute) -->
+  <!-- Google Fonts: Playfair Display (Serif Report Title), Anton & Archivo Black (Display) & Plus Jakarta Sans (UI) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Anton&family=Archivo+Black&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <script type="importmap">
   {
@@ -503,164 +503,221 @@
             </p>
           </div>
 
-          <!-- RESULTS DASHBOARD (Pastel Slush Sticker Aesthetic) -->
+          <!-- RESULTS DASHBOARD: Unified Professional Beauty Report Card -->
           <div class="results-wrap" id="resultDashboard">
-            <!-- Score Hero Card (Lavender Ground #e9ccff + 1px border) -->
-            <div class="score-hero-card">
-              <div class="sticker" style="background-color: var(--color-paper-white); margin-bottom: 12px;">
-                ★ CERTIFIED BIOMETRIC REPORT
+            <div class="beauty-report" id="beautyReport">
+              <!-- HEADER STRIP -->
+              <div class="report-header">
+                <span>FACIAL BEAUTY REPORT</span>
+                <span>ANALYSIS · INSIGHTS · RECOMMENDATIONS</span>
               </div>
-              <div style="display: flex; align-items: baseline; justify-content: center; margin-bottom: 6px;">
-                <span class="score-display-number" id="resAttractivenessScore">91</span>
-                <span class="score-out-label">/ 100</span>
+
+              <!-- SECTION 1: HERO (two columns: Photo 35% / Info 65%) -->
+              <div class="report-hero">
+                <!-- Left Column (35%) -->
+                <div class="report-hero-photo-col">
+                  <div class="report-photo-wrap">
+                    <img id="reportPhoto" class="report-photo" src="" alt="Analyzed Face" />
+                  </div>
+                </div>
+
+                <!-- Right Column (65%) -->
+                <div class="report-hero-info-col">
+                  <h2 class="report-title">Your Facial Beauty Report</h2>
+                  <div class="report-subtitle">REAL FEATURES · OBJECTIVE ANALYSIS</div>
+
+                  <div class="report-block">
+                    <h3>BASIC INFORMATION</h3>
+                    <p class="report-info-line">
+                      <strong>Estimated Age:</strong> <span id="reportAgeRange">—</span>
+                    </p>
+                    <p class="report-info-line">
+                      <strong>Gender:</strong> <span id="reportGender">-</span>
+                    </p>
+                    <p class="report-info-line">
+                      <strong>Face Shape:</strong> <span id="reportFaceShape">-</span>
+                    </p>
+                  </div>
+
+                  <div class="report-block">
+                    <h3>OVERALL IMPRESSION</h3>
+                    <p id="reportImpression" class="report-impression-text">-</p>
+                  </div>
+                </div>
               </div>
-              <div class="sticker" id="resHarmonyTier" style="background-color: var(--color-mint-pop); font-size: 15px; padding: 6px 20px; margin-bottom: 14px;">
-                Exceptional Facial Harmony
+
+              <!-- SECTION 2: OVERALL SCORE + ATTRIBUTE BARS (two columns) -->
+              <div class="report-score-section">
+                <!-- Left (40%): SVG Score Ring + Badge + 1 sentence explanation -->
+                <div class="report-score-col">
+                  <div class="score-ring-wrap">
+                    <svg class="score-ring" viewBox="0 0 120 120" aria-label="Attractiveness Score Ring">
+                      <circle class="ring-track" cx="60" cy="60" r="52" />
+                      <circle class="ring-fill" id="reportRingFill" cx="60" cy="60" r="52" />
+                    </svg>
+                    <div class="score-text">
+                      <span id="reportOverallScore">0.0</span>
+                      <span class="score-denominator">/ 10</span>
+                    </div>
+                  </div>
+                  <div class="rating-badge" id="reportRatingBadge">ABOVE AVERAGE</div>
+                  <p class="report-score-desc" id="reportScoreDesc">Comprehensive cephalometric score synthesizing 10 neoclassical biometric canons.</p>
+                </div>
+
+                <!-- Right (60%): 10 Stacked Attribute Progress Bars -->
+                <div class="report-attrs-col">
+                  <h3 class="report-section-heading">ATTRIBUTE BREAKDOWN</h3>
+                  <div class="attr-stack">
+                    <!-- 1. Facial Symmetry -->
+                    <div class="attr-row">
+                      <span class="attr-label">Facial Symmetry</span>
+                      <div class="attr-bar">
+                        <div id="reportSymmetryBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportSymmetry">0.0</span>
+                    </div>
+
+                    <!-- 2. Facial Proportions -->
+                    <div class="attr-row">
+                      <span class="attr-label">Facial Proportions</span>
+                      <div class="attr-bar">
+                        <div id="reportProportionsBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportProportions">0.0</span>
+                    </div>
+
+                    <!-- 3. Jawline Definition -->
+                    <div class="attr-row">
+                      <span class="attr-label">Jawline Definition</span>
+                      <div class="attr-bar">
+                        <div id="reportJawlineBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportJawline">0.0</span>
+                    </div>
+
+                    <!-- 4. Cheekbone Prominence -->
+                    <div class="attr-row">
+                      <span class="attr-label">Cheekbone Prominence</span>
+                      <div class="attr-bar">
+                        <div id="reportCheekbonesBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportCheekbones">0.0</span>
+                    </div>
+
+                    <!-- 5. Eye Balance -->
+                    <div class="attr-row">
+                      <span class="attr-label">Eye Balance</span>
+                      <div class="attr-bar">
+                        <div id="reportEyeBalanceBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportEyeBalance">0.0</span>
+                    </div>
+
+                    <!-- 6. Nose Balance -->
+                    <div class="attr-row">
+                      <span class="attr-label">Nose Balance</span>
+                      <div class="attr-bar">
+                        <div id="reportNoseBalanceBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportNoseBalance">0.0</span>
+                    </div>
+
+                    <!-- 7. Lip Proportion -->
+                    <div class="attr-row">
+                      <span class="attr-label">Lip Proportion</span>
+                      <div class="attr-bar">
+                        <div id="reportLipProportionBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportLipProportion">0.0</span>
+                    </div>
+
+                    <!-- 8. Bone Structure -->
+                    <div class="attr-row">
+                      <span class="attr-label">Bone Structure</span>
+                      <div class="attr-bar">
+                        <div id="reportBoneStructureBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportBoneStructure">0.0</span>
+                    </div>
+
+                    <!-- 9. Skin Vitality -->
+                    <div class="attr-row">
+                      <span class="attr-label">Skin Vitality</span>
+                      <div class="attr-bar">
+                        <div id="reportSkinVitalityBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportSkinVitality">0.0</span>
+                    </div>
+
+                    <!-- 10. Masculinity / Femininity Index -->
+                    <div class="attr-row">
+                      <span class="attr-label" id="reportGenderIndexLabel">Masculinity Index</span>
+                      <div class="attr-bar">
+                        <div id="reportMasculinityBar" style="width: 0%;"></div>
+                      </div>
+                      <span class="attr-val" id="reportMasculinity">0.0</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p id="resSummaryText" style="font-size: 16.5px; line-height: 1.5; max-width: 680px; margin: 0 auto 24px;">
-                Exceptional neoclassical facial harmony characterized by strong vertical thirds balance, sharp mandibular definition, and positive canthal tilt.
-              </p>
-              <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                <!-- 100% WORKING DOWNLOAD CARD BUTTON -->
-                <button type="button" class="btn-slush btn-slush-black" onclick="downloadAnalysisCard()">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Download Analysis Card (.PNG)
+
+              <!-- SECTION 3: STRENGTHS & IMPROVEMENTS (two columns) -->
+              <div class="report-insights-row">
+                <!-- Left: STRENGTHS -->
+                <div class="insights-col">
+                  <h3 class="insights-heading strengths-heading">STRENGTHS</h3>
+                  <ul id="reportStrengthsList" class="check-list"></ul>
+                </div>
+
+                <!-- Right: AREAS FOR IMPROVEMENT -->
+                <div class="insights-col">
+                  <h3 class="insights-heading improvements-heading">AREAS FOR IMPROVEMENT</h3>
+                  <ul id="reportImprovementsList" class="circle-list"></ul>
+                </div>
+              </div>
+
+              <!-- SECTION 4: GROOMING TIPS (4 mini-columns) -->
+              <div class="report-tips-section">
+                <h3 class="tips-main-heading">PERSONALIZED GROOMING RECOMMENDATIONS</h3>
+                <div class="report-tips-row">
+                  <div class="tip-col">
+                    <h4>1. SKINCARE</h4>
+                    <ul id="reportSkinTips"></ul>
+                  </div>
+                  <div class="tip-col">
+                    <h4>2. HAIR &amp; GROOMING</h4>
+                    <ul id="reportHairTips"></ul>
+                  </div>
+                  <div class="tip-col">
+                    <h4>3. STYLE &amp; WARDROBE</h4>
+                    <ul id="reportStyleTips"></ul>
+                  </div>
+                  <div class="tip-col">
+                    <h4>4. POSTURE &amp; HARMONY</h4>
+                    <ul id="reportPostureTips"></ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SECTION 5: ACTIONS -->
+              <div class="report-actions">
+                <button type="button" class="btn-report-dark" onclick="downloadReportCard()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download Report (.PNG)
                 </button>
-                <button type="button" class="btn-slush btn-slush-white" onclick="resetAnalyzer()">
+                <button type="button" class="btn-report-white" onclick="resetAnalyzer()">
                   Analyze Another Photo
                 </button>
               </div>
-            </div>
 
-            <!-- Dual Pane: Left Face preview + Right 6 Tool Cards -->
-            <div class="results-grid">
-              <!-- Left: Face Photo & Landmark Overlay Toggles -->
-              <div class="face-card-panel">
-                <div class="face-photo-wrap">
-                  <img id="resultPhotoImg" src="" alt="Analyzed Face" />
-                  <canvas id="landmarkOverlayCanvas"></canvas>
-                </div>
-
-                <div style="display: flex; flex-direction: column;">
-                  <label class="toggle-chip-item active">
-                    <span>Facial Thirds & Golden Grid</span>
-                    <input type="checkbox" id="toggleThirds" checked onchange="redrawLandmarkCanvas()" />
-                  </label>
-                  <label class="toggle-chip-item active">
-                    <span>Symmetry Midline & Eye Axis</span>
-                    <input type="checkbox" id="toggleSymmetry" checked onchange="redrawLandmarkCanvas()" />
-                  </label>
-                  <label class="toggle-chip-item active">
-                    <span>Jawline Gonial Vector</span>
-                    <input type="checkbox" id="toggleJaw" checked onchange="redrawLandmarkCanvas()" />
-                  </label>
-                </div>
-              </div>
-
-              <!-- Right: The 6 Tool Metric Cards -->
-              <div class="tool-cards-grid">
-                <!-- 1. Facial Symmetry -->
-                <div class="metric-card-slush" style="background-color: var(--color-sky-wash);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-mint-pop);">⚖️</div>
-                      <span>1. Facial Symmetry</span>
-                    </div>
-                    <span class="metric-score-value" id="resSymScore">92%</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barSym" style="width:92%"></div></div>
-                  <p id="resSymDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Minimal bilateral deviation between left and right hemifaces.</p>
-                  <span class="sticker" id="resSymPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Variance: 1.8%</span>
-                </div>
-
-                <!-- 2. Golden Ratio -->
-                <div class="metric-card-slush" style="background-color: var(--color-sunburst);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">Φ</div>
-                      <span>2. Golden Ratio (Φ)</span>
-                    </div>
-                    <span class="metric-score-value" id="resPhiScore">90%</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barPhi" style="width:90%"></div></div>
-                  <p id="resPhiDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Close 1:1.62 alignment across forehead, nose tip, and chin.</p>
-                  <span class="sticker" id="resPhiPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Ratio: 1:1.63</span>
-                </div>
-
-                <!-- 3. Jawline -->
-                <div class="metric-card-slush" style="background-color: var(--color-lavender);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">📐</div>
-                      <span>3. Jawline Definition</span>
-                    </div>
-                    <span class="metric-score-value" id="resJawScore">89%</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barJaw" style="width:89%"></div></div>
-                  <p id="resJawDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Crisp mandibular margin with pronounced jaw-to-neck transition.</p>
-                  <span class="sticker" id="resJawPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Gonial: 122°</span>
-                </div>
-
-                <!-- 4. Cheekbones -->
-                <div class="metric-card-slush" style="background-color: var(--color-paper-white);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-electric-blue); color: var(--color-paper-white);">💎</div>
-                      <span>4. Cheekbone Prominence</span>
-                    </div>
-                    <span class="metric-score-value" id="resCheekScore">88%</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barCheek" style="width:88%"></div></div>
-                  <p id="resCheekDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Prominent zygomatic arch framing the midface.</p>
-                  <span class="sticker" id="resCheekPill" style="background-color: var(--color-soft-mist); font-size: 12px; padding: 4px 10px;">Zygomatic: High</span>
-                </div>
-
-                <!-- 5. Canthal Tilt -->
-                <div class="metric-card-slush" style="background-color: var(--color-mint-pop);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-paper-white);">👁</div>
-                      <span>5. Canthal Tilt & Eyes</span>
-                    </div>
-                    <span class="metric-score-value" id="resCanthalScore">91%</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barCanthal" style="width:91%"></div></div>
-                  <p id="resCanthalDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Positive palpebral axis inclination with balanced eye spacing.</p>
-                  <span class="sticker" id="resCanthalPill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Positive (+4.1°)</span>
-                </div>
-
-                <!-- 6. Biological Age -->
-                <div class="metric-card-slush" style="background-color: var(--color-soft-mist);">
-                  <div class="metric-card-header">
-                    <div class="metric-card-title">
-                      <div class="metric-sticker-icon" style="background-color: var(--color-sunburst);">🧬</div>
-                      <span>6. Biological Age</span>
-                    </div>
-                    <span class="metric-score-value" id="resAgeScore">26 yrs</span>
-                  </div>
-                  <div class="slush-progress-bar"><div class="slush-progress-fill" id="barAge" style="width:92%"></div></div>
-                  <p id="resAgeDetail" style="font-size: 13.5px; margin-bottom: 8px; line-height: 1.45;">Smooth collagen structure along cheek and periorbital planes.</p>
-                  <span class="sticker" id="resAgePill" style="background-color: var(--color-paper-white); font-size: 12px; padding: 4px 10px;">Vitality: 92/100</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Insights Box -->
-            <div class="insights-box">
-              <div>
-                <h4>★ Key Facial Strengths</h4>
-                <ul id="resStrengthsList">
-                  <li>★ Harmonious neoclassical vertical thirds ratio</li>
-                  <li>★ Positive canthal tilt and balanced palpebral aperture</li>
-                  <li>★ Defined mandibular margin and sharp gonial contour</li>
-                </ul>
-              </div>
-              <div>
-                <h4>★ Aesthetic Recommendations</h4>
-                <ul id="resRecommendationsList">
-                  <li>★ Consistent posture supports jawline contour clarity</li>
-                  <li>★ Maintain balanced hydration for optimal dermal volume</li>
-                </ul>
+              <!-- FOOTER -->
+              <div class="report-footer">
+                <div class="report-footer-brand">TOOL GENIE · BIOMETRIC ANALYSIS</div>
+                <div class="report-footer-date" id="reportDate">Generated on Analysis</div>
               </div>
             </div>
           </div>
