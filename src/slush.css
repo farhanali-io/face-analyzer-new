@@ -1284,6 +1284,30 @@ a {
   background: #000;
 }
 
+/* ✅ MOBILE CAMERA CENTERING FIX */
+@media (max-width: 768px) {
+  #cameraActiveArea {
+    scroll-margin-top: 60px;
+    scroll-margin-bottom: 120px;
+    padding: 0 4px;
+  }
+
+  .camera-preview-box {
+    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  #webcamVideo {
+    max-width: 100%;
+    max-width: 340px;
+  }
+
+  #cameraContainer {
+    padding: 0 4px;
+  }
+}
+
 /* ============================================
    SCANNING OVERLAY CENTERING FIX
    ============================================ */
