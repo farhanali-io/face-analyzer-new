@@ -40,6 +40,36 @@ export async function loadFaceModels() {
     if (!api || !api.nets) {
       throw new Error('faceapi library not initialized');
     }
+
+    // Ensure TensorFlow.js backend is properly initialized (avoid uninitialized webgpu errors)
+    const tf = api.tf || (typeof window !== 'undefined' ? window.tf : null);
+    if (tf) {
+      try {
+        if (typeof tf.setBackend === 'function') {
+          try {
+            await tf.setBackend('webgl');
+          } catch (bErr) {
+            console.warn('[FaceAnalyzer] WebGL backend selection note:', bErr);
+          }
+        }
+        if (typeof tf.ready === 'function') {
+          await tf.ready();
+        }
+      } catch (tfErr) {
+        console.warn('[FaceAnalyzer] tf init warning, falling back to cpu:', tfErr);
+        try {
+          if (typeof tf.setBackend === 'function') {
+            await tf.setBackend('cpu');
+          }
+          if (typeof tf.ready === 'function') {
+            await tf.ready();
+          }
+        } catch (cpuErr) {
+          console.warn('[FaceAnalyzer] cpu fallback failed:', cpuErr);
+        }
+      }
+    }
+
     await api.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     await api.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
     await api.nets.ageGenderNet.loadFromUri(MODEL_URL);
