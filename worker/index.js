@@ -8,6 +8,11 @@ export default {
       return env.ASSETS.fetch(new Request(new URL("/index.html", url), request));
     }
 
+    // Deep scan page
+    if (path === "/deep-scan" || path === "/deep-scan/") {
+      return env.ASSETS.fetch(new Request(new URL("/deep-scan.html", url), request));
+    }
+
     // Serve blog.html for /blog or /blog/
     if (path === "/blog" || path === "/blog/") {
       return env.ASSETS.fetch(new Request(new URL("/blog.html", url), request));

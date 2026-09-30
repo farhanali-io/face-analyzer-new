@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Scan — Advanced 3D Facial Analysis | Tool Genie</title>
+  <meta name="description" content="Advanced 3D facial depth analysis using 468 landmarks. Real depth measurement, head pose, iris analysis, emotion detection, and skin analysis. Runs 100% in your browser." />
+  <link rel="canonical" href="https://www.toolgenie.online/deep-scan" />
+  
+  <!-- OpenGraph Metadata -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.toolgenie.online/deep-scan" />
+  <meta property="og:title" content="Deep Scan — Advanced 3D Facial Analysis | Tool Genie" />
+  <meta property="og:description" content="Advanced 3D facial depth analysis using 468 landmarks. Real depth measurement, head pose, iris analysis, emotion detection, and skin analysis. Runs 100% in your browser." />
+  <meta property="og:site_name" content="Tool Genie" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Deep Scan — Advanced 3D Facial Analysis | Tool Genie" />
+  <meta name="twitter:description" content="Advanced 3D facial depth analysis using 468 landmarks. Real depth measurement, head pose, iris analysis, emotion detection, and skin analysis. Runs 100% in your browser." />
+
+  <!-- Schema.org WebPage Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Tool Genie Deep Scan — Advanced 3D Facial Analysis",
+    "url": "https://www.toolgenie.online/deep-scan",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "description": "Advanced 3D facial depth analysis using 468 landmarks. Real depth measurement, head pose, iris analysis, emotion detection, and skin analysis.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Tool Genie",
+      "url": "https://www.toolgenie.online"
+    }
+  }
+  </script>
+
+  <!-- Google Fonts: Anton & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.143.0/build/three.module.js",
+      "three/examples/jsm/": "https://unpkg.com/three@0.143.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <link rel="stylesheet" href="/slush.css" />
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Human.js for 3D Facial Mesh & Depth Biometrics -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
+</head>
+<body>
+  <!-- 3D Electric Blue Inflatable Ribbon Canvas -->
+  <canvas class="ribbon-canvas" id="ribbonCanvas"></canvas>
+
+  <!-- Top Marquee Banner -->
+  <div class="marquee-bar">
+    <div class="marquee-content">
+      <span>★ DEEP SCAN — 468-POINT 3D FACIAL DEPTH MESH</span>
+      <span>★ REAL DEPTH MEASUREMENT & HEAD POSE TRACKING</span>
+      <span>★ IRIS & CORNEA GAZE ANALYSIS</span>
+      <span>★ ON-DEVICE 100% PRIVATE BIOMETRIC SUITE</span>
+      <span>★ DEEP SCAN — 468-POINT 3D FACIAL DEPTH MESH</span>
+      <span>★ REAL DEPTH MEASUREMENT & HEAD POSE TRACKING</span>
+    </div>
+  </div>
+
+  <!-- Slide-out Navigation Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <aside class="drawer" id="siteDrawer" aria-label="Site Navigation">
+    <div class="drawer-header">
+      <div class="brand-badge">
+        <span class="brand-logo-disc">TG</span>
+        Tool Genie
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()" aria-label="Close menu">&times;</button>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <h4 style="font-family: var(--font-display); font-size: 13px; text-transform: uppercase; margin-bottom: 12px; color: var(--color-carbon);">
+        Site Navigation
+      </h4>
+      <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
+        <li><a href="/" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🏠 Home & Full Face Analyzer</a></li>
+        <li><a href="/deep-scan" onclick="closeDrawer()" class="btn-slush btn-slush-black" style="width:100%; justify-content:flex-start;">🔬 Deep Scan (Advanced 3D)</a></li>
+        <li><a href="/#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📐 6 Biometric Canons</a></li>
+        <li><a href="/#methodology" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🔬 Science & Methodology</a></li>
+        <li><a href="/blog" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📚 Biometrics & Aesthetics Blog</a></li>
+        <li><a href="/contact" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">✉️ Contact Page</a></li>
+        <li><a href="/about" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">ℹ️ About Tool Genie</a></li>
+        <li><a href="/privacy" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🔒 Privacy Policy</a></li>
+        <li><a href="/terms" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📜 Terms of Service</a></li>
+        <li><a href="/history" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🗑️ Delete My History</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="page" id="top">
+    <!-- TOP NAVIGATION -->
+    <header class="nav-wrap">
+      <a href="/" class="brand-badge">
+        <span class="brand-logo-disc">TG</span>
+        Tool Genie
+      </a>
+
+      <!-- Center Pill Nav Buttons -->
+      <nav class="nav-pills">
+        <a href="/" class="nav-pill-btn">Full Face Analyzer</a>
+        <a href="/deep-scan" class="nav-pill-btn active">Deep Scan</a>
+        <a href="/#tools" class="nav-pill-btn">6 Canons</a>
+        <a href="/#methodology" class="nav-pill-btn">Methodology</a>
+        <a href="/blog" class="nav-pill-btn">Blog</a>
+        <a href="/contact" class="nav-pill-btn">Contact</a>
+      </nav>
+
+      <!-- Right Actions -->
+      <div class="nav-right-actions">
+        <a href="#deep-scan-analyzer" class="btn-slush btn-slush-black">
+          Launch Tool
+        </a>
+        <button class="btn-plus" onclick="openDrawer()" aria-label="Open Navigation Menu" title="Open Navigation Menu">
+          +
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="section-hero">
+      <div class="floating-sticker sticker" style="top: 20%; left: 8%; background-color: var(--color-voltage-violet); color: white; transform: rotate(-6deg);">
+        ★ 468 3D MESH
+      </div>
+      <div class="floating-sticker sticker" style="top: 22%; right: 9%; background-color: var(--color-mint-pop); transform: rotate(7deg);">
+        🔬 REAL DEPTH
+      </div>
+      <div class="floating-sticker sticker" style="bottom: 22%; left: 10%; background-color: var(--color-ember); color: var(--color-paper-white); transform: rotate(-5deg);">
+        👁 IRIS SCAN
+      </div>
+      <div class="floating-sticker sticker" style="bottom: 20%; right: 11%; background-color: var(--color-sunburst); transform: rotate(6deg);">
+        🎯 ON-DEVICE
+      </div>
+
+      <div class="hero-container">
+        <div class="sticker" style="background-color: var(--color-paper-white); margin-bottom: 12px;">
+          ✦ ADVANCED 3D BIOMETRICS & DEPTH MESH
+        </div>
+
+        <h1 class="hero-display-title">
+          DEEP SCAN
+        </h1>
+
+        <p class="hero-tagline">
+          Advanced 3D Facial Analysis with 468 Landmark Depth Mesh
+        </p>
+
+        <div class="sticker-pill-row">
+          <span class="sticker" style="background-color: var(--color-paper-white);">★ 468-POINT MESH</span>
+          <span class="sticker" style="background-color: var(--color-mint-pop);">★ HEAD POSE PITCH/YAW/ROLL</span>
+          <span class="sticker" style="background-color: var(--color-sunburst);">★ IRIS & GAZE</span>
+          <span class="sticker" style="background-color: var(--color-lavender);">★ 100% PRIVATE</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEEP SCAN ANALYZER SECTION -->
+    <section class="section-paper" id="deep-scan-analyzer">
+      <div class="content-maxw">
+        <div class="analyzer-master-card">
+          <!-- Input Area -->
+          <div id="deepScanInputArea">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div class="sticker" style="background-color: var(--color-voltage-violet); color: white; margin-bottom: 12px;">
+                ★ ADVANCED 3D ANALYSIS
+              </div>
+              <h2 style="font-family: var(--font-display); font-size: clamp(28px, 4vw, 44px); text-transform: uppercase; color: var(--color-carbon); margin-bottom: 10px;">
+                Deep 3D Facial Scan
+              </h2>
+              <p style="font-size: 15.5px; color: var(--color-carbon); max-width: 620px; margin: 0 auto 20px; line-height: 1.5;">
+                468-point 3D face mesh, real depth measurement, head pose tracking, iris analysis, emotion detection, and skin analysis — all on-device.
+              </p>
+
+              <!-- Pill Mode Tabs -->
+              <div class="tab-pills-bar">
+                <button class="tab-pill active" id="deepTabUpload" onclick="deepSwitchInputMode('upload')">
+                  Upload Photo
+                </button>
+                <button class="tab-pill" id="deepTabCamera" onclick="deepSwitchInputMode('camera')">
+                  Live Camera
+                </button>
+              </div>
+
+              <!-- Model Loader Pill -->
+              <div id="deepModelLoaderPill" class="model-loader-pill" style="display: inline-flex; background-color: var(--color-voltage-violet); color: white;">
+                <span id="deepModelLoaderSpinner" class="model-loader-spinner"></span>
+                <span id="deepModelLoaderText">Loading 3D engine...</span>
+              </div>
+            </div>
+
+            <!-- Processing Bar -->
+            <div id="deepProcessingBar" style="display:none; margin: 20px auto; max-width: 600px; padding: 24px; background: #f8f6f2; border: 1px solid #1a1a1a; border-radius: 20px; text-align: center;">
+              <div style="font-family: var(--font-display); font-size: 14px; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 16px; color: #1a1a1a;">
+                <span id="deepProcessingStage">Initializing...</span>
+              </div>
+              <div style="width: 100%; height: 8px; background: #e8e5df; border-radius: 100px; overflow: hidden; margin-bottom: 12px;">
+                <div id="deepProcessingFill" style="height: 100%; width: 0%; background: #5c4ade; border-radius: 100px; transition: width 0.3s ease;"></div>
+              </div>
+              <div style="font-size: 13px; color: #6b6b6b;">
+                <span id="deepProcessingPercent">0</span>% complete
+              </div>
+            </div>
+
+            <!-- Upload Container -->
+            <div id="deepUploadContainer">
+              <div class="slush-drop-box" id="deepDropZone" onclick="document.getElementById('deepFileInput').click()">
+                <input type="file" id="deepFileInput" accept="image/*" style="display:none" onchange="deepHandleFileSelect(event)" />
+                <div class="upload-sticker-icon" style="background-color: var(--color-voltage-violet); color: white;">
+                  🔬
+                </div>
+                <h3 style="font-family: var(--font-display); font-size: 22px; text-transform: uppercase; margin-bottom: 8px;">
+                  Drop your portrait for 3D analysis
+                </h3>
+                <p style="font-size: 14.5px; color: var(--color-carbon); max-width: 480px; margin: 0 auto;">
+                  Supports JPG, PNG, WEBP. All 3D analysis runs entirely in your browser — nothing is uploaded.
+                </p>
+              </div>
+            </div>
+
+            <!-- Camera Container -->
+            <div id="deepCameraContainer" style="display:none">
+              <div id="deepCameraPermissionPrompt" class="camera-card">
+                <div class="upload-sticker-icon" style="background-color: var(--color-voltage-violet); color: white;">🎥</div>
+                <h3 style="font-family: var(--font-display); font-size: 22px; text-transform: uppercase; margin-bottom: 10px;">
+                  Enable Camera for Live 3D Scan
+                </h3>
+                <p style="font-size: 14.5px; line-height: 1.55; max-width: 440px; margin: 0 auto 22px;">
+                  Position your face forward-facing for the highest 3D accuracy.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                  <button type="button" class="btn-slush btn-slush-black" onclick="deepRequestCameraAccess()">Allow Camera</button>
+                  <button type="button" class="btn-slush btn-slush-white" onclick="deepSwitchInputMode('upload')">Use Upload</button>
+                </div>
+              </div>
+              <div id="deepCameraActiveArea" style="display:none">
+                <div class="camera-preview-box">
+                  <video class="camera-video" id="deepWebcamVideo" autoplay playsinline muted></video>
+                </div>
+                <div style="text-align:center; margin-top:16px;">
+                  <button type="button" class="btn-slush btn-slush-black" onclick="deepCaptureSnapshot()">📸 Capture 3D Scan</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Demo Samples -->
+            <div class="samples-bar">
+              <span style="font-size: 13px; font-weight: 700; text-transform: uppercase;">Or test instant demo:</span>
+              <button type="button" class="sample-pill-btn" onclick="deepLoadSample('female')">👩 Female Portrait</button>
+              <button type="button" class="sample-pill-btn" onclick="deepLoadSample('male')">👨 Male Portrait</button>
+            </div>
+          </div>
+
+          <!-- Scanning Overlay -->
+          <div class="scanning-state" id="deepScanningOverlay">
+            <div class="scanner-box" style="border-color: #5c4ade;">
+              <img id="deepScanningImgPreview" class="scanner-img-view" src="" alt="Scanning" />
+              <div class="scanner-beam" style="background-color: #5c4ade;"></div>
+            </div>
+            <div class="sticker" style="background-color: var(--color-voltage-violet); color: white; margin-bottom: 10px;">
+              ★ 3D DEPTH PROCESSING
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 24px; text-transform: uppercase; margin-bottom: 6px;">
+              Building 468-Point 3D Mesh
+            </h3>
+            <p id="deepScanStepText" style="font-size: 15px; font-weight: 600; color: var(--color-carbon);">
+              Initializing...
+            </p>
+          </div>
+
+          <!-- Result Dashboard -->
+          <div class="results-wrap" id="deepResultDashboard">
+            <div class="score-hero-card" style="background-color: var(--color-voltage-violet); color: white;">
+              <div class="sticker" style="background-color: var(--color-paper-white); color: var(--color-carbon); margin-bottom: 12px;">
+                ★ DEEP 3D REPORT
+              </div>
+              <div style="display: flex; align-items: baseline; justify-content: center; margin-bottom: 6px;">
+                <span class="score-display-number" id="deepOverallScore" style="color: white;">0</span>
+                <span class="score-out-label" style="color: white;">/100</span>
+              </div>
+              <div class="sticker" id="deepRatingBadge" style="background-color: var(--color-mint-pop); color: var(--color-carbon); font-size: 15px; padding: 6px 20px; margin-bottom: 14px;">
+                Analyzing...
+              </div>
+              <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <button type="button" class="btn-slush btn-slush-white" onclick="deepDownloadReport()">
+                  Download 3D Report
+                </button>
+                <button type="button" class="btn-slush btn-slush-white" onclick="deepResetAnalyzer()">
+                  Analyze Another
+                </button>
+              </div>
+            </div>
+
+            <!-- Report Card Content (filled in Chunk 3) -->
+            <div id="deepReportCard" style="margin-top: 32px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a href="/" class="brand-badge" style="margin-bottom: 12px;">
+            <span class="brand-logo-disc">TG</span>
+            Tool Genie
+          </a>
+          <p>
+            AI Full Face Analyzer measuring facial attractiveness, symmetry, golden ratio adherence, and aesthetic harmony.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Analyzer Suite</h4>
+          <ul>
+            <li><a href="/">Full Face Analyzer Tool</a></li>
+            <li><a href="/deep-scan">Deep Scan (Advanced 3D)</a></li>
+            <li><a href="/#tools">Facial Symmetry</a></li>
+            <li><a href="/#tools">Golden Ratio (Φ)</a></li>
+            <li><a href="/#tools">Jawline Gonial Angle</a></li>
+            <li><a href="/#tools">Cheekbone Prominence</a></li>
+            <li><a href="/#tools">Canthal Tilt</a></li>
+            <li><a href="/#tools">Biological Age</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Pages & Science</h4>
+          <ul>
+            <li><a href="/blog">Biometrics Blog</a></li>
+            <li><a href="/contact">Contact Research Team</a></li>
+            <li><a href="/about">About Tool Genie</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/history">Delete My History</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        &copy; 2026 Tool Genie — Advanced 3D Biometrics & Cephalometric Research.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Inline drawer controls
+    window.openDrawer = function() {
+      const drawer = document.getElementById('siteDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      if (drawer && overlay) {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    };
+    window.closeDrawer = function() {
+      const drawer = document.getElementById('siteDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      if (drawer && overlay) {
+        drawer.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    };
+
+    window.deepSwitchInputMode = function(mode) { /* Filled in Chunk 2 */ };
+    window.deepRequestCameraAccess = function() { /* Filled in Chunk 2 */ };
+    window.deepCaptureSnapshot = function() { /* Filled in Chunk 2 */ };
+    window.deepHandleFileSelect = function(e) { /* Filled in Chunk 2 */ };
+    window.deepLoadSample = function(type) { /* Filled in Chunk 2 */ };
+    window.deepResetAnalyzer = function() { /* Filled in Chunk 2 */ };
+    window.deepDownloadReport = function() { /* Filled in Chunk 3 */ };
+  </script>
+</body>
+</html>

@@ -192,6 +192,8 @@ async function startServer() {
 
         if (url.startsWith('/blog')) {
           fileToServe = 'blog.html';
+        } else if (url.startsWith('/deep-scan')) {
+          fileToServe = 'deep-scan.html';
         } else if (url.startsWith('/contact')) {
           fileToServe = 'contact.html';
         } else if (url.startsWith('/terms')) {
@@ -226,6 +228,9 @@ async function startServer() {
     app.use(express.static(path.resolve(__dirname, 'dist')));
     app.get('/blog', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'blog.html'));
+    });
+    app.get('/deep-scan', (_req, res) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'deep-scan.html'));
     });
     app.get('/contact', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'contact.html'));

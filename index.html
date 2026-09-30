@@ -147,6 +147,8 @@
       window.scrollTo(0, 0);
     }
   </script>
+  <!-- Human.js for 3D Facial Mesh & Depth Biometrics -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/human/dist/human.js"></script>
 </head>
 <body>
   <!-- 3D Electric Blue Inflatable Ribbon Canvas -->
@@ -184,8 +186,10 @@
         Site Navigation
       </h4>
       <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
-        <li><a href="/" onclick="closeDrawer()" class="btn-slush btn-slush-black" style="width:100%; justify-content:flex-start;">🏠 Home & Analyzer Tool</a></li>
+        <li><a href="/" onclick="closeDrawer()" class="btn-slush btn-slush-black" style="width:100%; justify-content:flex-start;">🏠 Home & Full Face Analyzer</a></li>
+        <li><a href="/deep-scan" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🔬 Deep Scan (Advanced 3D)</a></li>
         <li><a href="/#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📐 6 Biometric Canons</a></li>
+        <li><a href="/#methodology" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🔬 Science & Methodology</a></li>
         <li><a href="/blog" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📚 Biometrics & Aesthetics Blog</a></li>
         <li><a href="/contact" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">✉️ Contact Page</a></li>
         <li><a href="/about" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">ℹ️ About Tool Genie</a></li>
@@ -206,9 +210,10 @@
 
       <!-- Center Pill Nav Buttons -->
       <nav class="nav-pills">
-        <a href="#analyzer" class="nav-pill-btn active">Full Face Analyzer</a>
-        <a href="#tools" class="nav-pill-btn">6 Canons</a>
-        <a href="#methodology" class="nav-pill-btn">Methodology</a>
+        <a href="/" class="nav-pill-btn active">Full Face Analyzer</a>
+        <a href="/deep-scan" class="nav-pill-btn">Deep Scan</a>
+        <a href="/#tools" class="nav-pill-btn">6 Canons</a>
+        <a href="/#methodology" class="nav-pill-btn">Methodology</a>
         <a href="/blog" class="nav-pill-btn">Blog</a>
         <a href="/contact" class="nav-pill-btn">Contact</a>
       </nav>
@@ -925,13 +930,14 @@
         <div class="footer-col">
           <h4>Analyzer Suite</h4>
           <ul>
-            <li><a href="#analyzer">Full Face Analyzer</a></li>
-            <li><a href="#tools">Facial Symmetry</a></li>
-            <li><a href="#tools">Golden Ratio (Φ)</a></li>
-            <li><a href="#tools">Jawline Gonial Angle</a></li>
-            <li><a href="#tools">Cheekbone Prominence</a></li>
-            <li><a href="#tools">Canthal Tilt</a></li>
-            <li><a href="#tools">Biological Age</a></li>
+            <li><a href="/">Full Face Analyzer Tool</a></li>
+            <li><a href="/deep-scan">Deep Scan (Advanced 3D)</a></li>
+            <li><a href="/#tools">Facial Symmetry</a></li>
+            <li><a href="/#tools">Golden Ratio (Φ)</a></li>
+            <li><a href="/#tools">Jawline Gonial Angle</a></li>
+            <li><a href="/#tools">Cheekbone Prominence</a></li>
+            <li><a href="/#tools">Canthal Tilt</a></li>
+            <li><a href="/#tools">Biological Age</a></li>
           </ul>
         </div>
 
