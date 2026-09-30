@@ -337,27 +337,42 @@
     <span id="toastMsg">Notification message</span>
   </div>
 
-  <!-- Module Scripts -->
-  <script type="module">
-    import { initSlushRibbon } from '/src/ribbon.js';
-    import { showToast, openDrawer, closeDrawer } from '/src/faceAnalyzer.js';
-
-    window.openDrawer = openDrawer;
-    window.closeDrawer = closeDrawer;
-
-    // Start 3D Inflatable Ribbon
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSlushRibbon);
-    } else {
-      initSlushRibbon();
+  <script>
+  // Inline drawer controls
+  window.openDrawer = function() {
+    const drawer = document.getElementById('siteDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
+  };
+  window.closeDrawer = function() {
+    const drawer = document.getElementById('siteDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  };
 
-    window.handleContactPageSubmit = function(e) {
-      e.preventDefault();
-      const name = document.getElementById('contactName')?.value || 'Friend';
-      showToast(`Thank you, ${name}! Your inquiry has been received by the research team.`);
-      e.target.reset();
-    };
-  </script>
-</body>
-</html>
+  // Inline toast
+  window.showToast = function(msg) {
+    const toast = document.getElementById('siteToast');
+    const toastMsg = document.getElementById('toastMsg');
+    if (!toast || !toastMsg) return;
+    toastMsg.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  };
+
+  // Contact form handler
+  window.handleContactPageSubmit = function(e) {
+    e.preventDefault();
+    const name = document.getElementById('contactName')?.value || 'Friend';
+    showToast(`Thank you, ${name}! Your inquiry has been received by the research team.`);
+    e.target.reset();
+  };
+</script>
