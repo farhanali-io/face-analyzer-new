@@ -91,7 +91,7 @@
   }
   </script>
 
-  <link rel="stylesheet" href="/src/slush.css" />
+<link rel="stylesheet" href="/slush.css" />
 </head>
 <body>
   <!-- 3D Electric Blue Inflatable Ribbon Canvas -->
@@ -403,20 +403,24 @@
     </footer>
   </div>
 
-  <!-- Module Scripts -->
-  <script type="module">
-    import { initSlushRibbon } from '/src/ribbon.js';
-    import { openDrawer, closeDrawer } from '/src/faceAnalyzer.js';
-
-    window.openDrawer = openDrawer;
-    window.closeDrawer = closeDrawer;
-
-    // Start 3D Inflatable Ribbon
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSlushRibbon);
-    } else {
-      initSlushRibbon();
+ <script>
+  // Inline drawer controls (avoids external JS dependency)
+  window.openDrawer = function() {
+    const drawer = document.getElementById('siteDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.add('active');
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
     }
-  </script>
-</body>
-</html>
+  };
+  window.closeDrawer = function() {
+    const drawer = document.getElementById('siteDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer && overlay) {
+      drawer.classList.remove('active');
+      overlay.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  };
+</script>
