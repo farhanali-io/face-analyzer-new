@@ -181,7 +181,7 @@ async function startServer() {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true, hmr: false },
-      appType: 'spa',
+      appType: 'custom',
     });
     app.use(vite.middlewares);
 
@@ -194,10 +194,22 @@ async function startServer() {
           fileToServe = 'blog.html';
         } else if (url.startsWith('/contact')) {
           fileToServe = 'contact.html';
+        } else if (url.startsWith('/terms')) {
+          fileToServe = 'terms.html';
+        } else if (url.startsWith('/privacy')) {
+          fileToServe = 'privacy.html';
+        } else if (url.startsWith('/about')) {
+          fileToServe = 'about.html';
+        } else if (url.startsWith('/history') || url.startsWith('/delete-history')) {
+          fileToServe = 'history.html';
         }
 
-        const filePath = path.resolve(__dirname, fileToServe);
-        if (fs.existsSync(filePath)) {
+        const candidatePaths = [
+          path.resolve(__dirname, fileToServe),
+          path.resolve(__dirname, 'public', fileToServe)
+        ];
+        const filePath = candidatePaths.find(p => fs.existsSync(p));
+        if (filePath) {
           const raw = fs.readFileSync(filePath, 'utf-8');
           const html = await vite.transformIndexHtml(req.originalUrl, raw);
           res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
@@ -217,6 +229,18 @@ async function startServer() {
     });
     app.get('/contact', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'contact.html'));
+    });
+    app.get('/terms', (_req, res) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'terms.html'));
+    });
+    app.get('/privacy', (_req, res) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'privacy.html'));
+    });
+    app.get('/about', (_req, res) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'about.html'));
+    });
+    app.get(['/history', '/delete-history'], (_req, res) => {
+      res.sendFile(path.resolve(__dirname, 'dist', 'history.html'));
     });
     app.get('*', (_req, res) => {
       res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));

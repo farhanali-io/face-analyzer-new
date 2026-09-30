@@ -127,9 +127,12 @@
       <ul style="list-style:none; display:flex; flex-direction:column; gap:10px;">
         <li><a href="/" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🏠 Home & Analyzer Tool</a></li>
         <li><a href="/#tools" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📐 6 Biometric Canons</a></li>
-        <li><a href="/#methodology" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🧬 Cephalometric Methodology</a></li>
         <li><a href="/blog" onclick="closeDrawer()" class="btn-slush btn-slush-black" style="width:100%; justify-content:flex-start;">📚 Biometrics & Aesthetics Blog</a></li>
         <li><a href="/contact" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">✉️ Contact Page</a></li>
+        <li><a href="/about" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">ℹ️ About Tool Genie</a></li>
+        <li><a href="/privacy" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🔒 Privacy Policy</a></li>
+        <li><a href="/terms" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">📜 Terms of Service</a></li>
+        <li><a href="/history" onclick="closeDrawer()" class="btn-slush btn-slush-white" style="width:100%; justify-content:flex-start;">🗑️ Delete My History</a></li>
       </ul>
     </div>
   </aside>
@@ -200,67 +203,52 @@
       </div>
     </section>
 
-    <!-- SECTION 2: FEATURED ESSAY (Paper White Ground) -->
+    <!-- SECTION 2: ARTICLES (Paper White Ground) -->
     <section class="section-paper">
       <div class="content-maxw">
-        <div class="analyzer-master-card" style="margin-bottom: 48px;">
-          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px;">
-            <span class="sticker" style="background-color: var(--color-sunburst);">★ FEATURED CLINICAL PAPER</span>
-            <span class="sticker" style="background-color: var(--color-paper-white); font-size: 12px;">8 MIN READ</span>
-            <span class="sticker" style="background-color: var(--color-mint-pop); font-size: 12px;">PEER-REVIEWED STANDARDS</span>
+        <!-- SEARCH BAR FOR BLOGS -->
+        <div class="blog-search-wrap" style="max-width: 580px; margin: 0 auto 36px; padding: 0 12px; text-align: center;">
+          <div class="blog-search-input-box" style="position: relative; display: flex; align-items: center; background-color: var(--color-paper-white); border: 2px solid var(--color-carbon); border-radius: var(--radius-pill); padding: 8px 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06); transition: box-shadow 0.2s, border-color 0.2s;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-carbon); opacity: 0.65; flex-shrink: 0; margin-right: 12px;">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="blogSearchInput" 
+              placeholder="Search related articles (e.g., Canthal tilt, Symmetry, Gonial, Cheekbones)..." 
+              style="width: 100%; border: none; outline: none; background: transparent; font-family: var(--font-body); font-size: 14.5px; font-weight: 600; color: var(--color-carbon);"
+              oninput="handleBlogSearch(this.value)"
+              autocomplete="off"
+              aria-label="Search articles"
+            />
+            <button 
+              id="blogSearchClearBtn" 
+              type="button" 
+              onclick="clearBlogSearch()" 
+              style="display: none; background: none; border: none; cursor: pointer; color: var(--color-carbon); font-size: 18px; font-weight: bold; padding: 0 6px; line-height: 1;"
+              aria-label="Clear search query"
+            >&times;</button>
           </div>
-
-          <h2 style="font-family: var(--font-display); font-size: clamp(28px, 4.2vw, 48px); line-height: 0.95; text-transform: uppercase; color: var(--color-carbon); margin-bottom: 16px;">
-            The Science of Neoclassical Facial Canons & The Divine Ratio (Φ 1.618)
-          </h2>
-
-          <p style="font-size: 17px; line-height: 1.6; color: var(--color-carbon); margin-bottom: 24px;">
-            Dating back to Vitruvius, Albrecht Dürer, and Leonardo da Vinci, facial aesthetics has always been grounded in mathematical proportions rather than arbitrary subjective taste. Modern craniofacial surgery confirms that human subconscious perception of attractiveness is deeply linked to the divine ratio (1.618) across the vertical facial thirds and horizontal fifths.
-          </p>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 28px;">
-            <div style="background-color: var(--color-sky-wash); border: 1px solid var(--color-carbon); border-radius: var(--radius-card-sm); padding: 18px;">
-              <strong style="display:block; font-size:14px; text-transform:uppercase; margin-bottom:6px;">1. The Trichion-to-Menton Axis</strong>
-              <p style="font-size: 13.5px; line-height: 1.45;">Vertical harmony requires the forehead (trichion to glabella), midface (glabella to subnasale), and lower face (subnasale to menton) to each comprise precisely 33.3% of total height.</p>
-            </div>
-
-            <div style="background-color: var(--color-lavender); border: 1px solid var(--color-carbon); border-radius: var(--radius-card-sm); padding: 18px;">
-              <strong style="display:block; font-size:14px; text-transform:uppercase; margin-bottom:6px;">2. Horizontal Rule of Fifths</strong>
-              <p style="font-size: 13.5px; line-height: 1.45;">Intercanthal width between the medial eye corners should ideally equal one ocular width, which in turn equals the nasal alar base width.</p>
-            </div>
-
-            <div style="background-color: var(--color-mint-pop); border: 1px solid var(--color-carbon); border-radius: var(--radius-card-sm); padding: 18px;">
-              <strong style="display:block; font-size:14px; text-transform:uppercase; margin-bottom:6px;">3. Instant Verification</strong>
-              <p style="font-size: 13.5px; line-height: 1.45;">Tool Genie calculates your exact percentage divergence from these canons using 68 biometric landmark vectors in under 1.5 seconds.</p>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <a href="/" class="btn-slush btn-slush-black">
-              Calculate Your Golden Ratio Now
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </a>
-            <a href="/#methodology" class="btn-slush btn-slush-white">
-              View Cephalometric Formulas
-            </a>
+          <div id="blogSearchCount" style="margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--color-carbon); opacity: 0.65;">
+            4 clinical articles available
           </div>
         </div>
 
-        <!-- SECTION TITLE: ALL SCIENTIFIC GUIDES -->
-        <div class="section-title-block" style="margin-bottom: 40px;">
-          <div class="sticker" style="background-color: var(--color-lavender);">
-            ★ DEEP DIVE ARTICLES
-          </div>
-          <h2 class="section-display-h2">
-            ESSAYS ON FACIAL<br />GEOMETRY
-          </h2>
-          <p class="section-desc-p">
-            Comprehensive guides on each of the 6 core metrics evaluated by the Tool Genie Full Face Analyzer.
+        <!-- NO RESULTS MESSAGE (Hidden by default) -->
+        <div id="noResultsBox" style="display: none; text-align: center; padding: 40px 20px; background-color: var(--color-paper-white); border: 2px dashed var(--color-carbon); border-radius: var(--radius-card); margin-bottom: 30px;">
+          <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+          <h3 style="font-family: var(--font-display); font-size: 22px; text-transform: uppercase; margin-bottom: 6px;">No articles found</h3>
+          <p style="font-size: 14px; color: var(--color-carbon); opacity: 0.8; margin-bottom: 16px;">
+            We couldn't find any articles matching your search. Try searching for "tilt", "symmetry", "angle", or "cheekbones".
           </p>
+          <button onclick="clearBlogSearch()" class="btn-slush btn-slush-black" style="font-size: 12px; padding: 8px 16px;">
+            Clear Search Filter
+          </button>
         </div>
 
         <!-- 4 ESSAY CARDS GRID -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+        <div id="blogGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
           <!-- Article 1: Canthal Tilt -->
           <article class="slush-info-card" id="canthal-tilt" style="background-color: var(--color-paper-white);">
             <div class="slush-card-badge" style="background-color: var(--color-mint-pop);">
@@ -271,11 +259,11 @@
               Canthal tilt describes the angle formed by drawing a line from the medial canthus (inner eye corner) to the lateral canthus (outer eye corner) relative to the horizontal pupillary line.
             </p>
             <p style="font-size: 14px; margin-bottom: 18px; line-height: 1.5;">
-              In aesthetic medicine, a positive tilt of +2° to +6° is strongly associated with youthfulness and vitality because the lateral canthus is elevated above the medial canthus, counteracting periorbital laxity. A negative tilt can convey tiredness, while a neutral tilt provides classical neoclassical balance.
+              Canthal tilt is the angle between the inner and outer corners of the eye. A positive tilt (+2° to +6°) is associated with youthfulness and vitality, while negative or neutral tilts create different aesthetic perceptions. Full guide coming soon.
             </p>
             <div style="border-top: 1px solid var(--color-carbon); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="sticker" style="background-color: var(--color-sky-wash); font-size: 11px;">TOOL 5 IN SUITE</span>
-              <a href="/" class="btn-slush btn-slush-black" style="padding: 6px 14px; font-size: 12px;">Test Canthal Tilt →</a>
+              <span class="sticker" style="background-color: var(--color-soft-mist); font-size: 11px;">COMING SOON</span>
+              <span class="btn-slush btn-slush-white" style="padding: 6px 14px; font-size: 12px; opacity: 0.6; cursor: not-allowed; pointer-events: none;">Article Coming Soon</span>
             </div>
           </article>
 
@@ -289,11 +277,11 @@
               Evolutionary biologists note that bilateral symmetry is one of the strongest cues in mate selection, signaling developmental stability and immune fitness.
             </p>
             <p style="font-size: 14px; margin-bottom: 18px; line-height: 1.5;">
-              No face is 100% mathematically symmetric; however, high-harmony faces exhibit lateral hemiface variance under 2.5%. Tool Genie splits your face across the sagittal midline (from nasion through philtrum to pogonion) and evaluates pupillary horizontal tilt, nasal deviation, and oral commissure levelness.
+              Bilateral symmetry is one of the strongest cues in facial attractiveness. High-harmony faces typically show under 2.5% lateral variance across the sagittal midline. Full guide coming soon.
             </p>
             <div style="border-top: 1px solid var(--color-carbon); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="sticker" style="background-color: var(--color-lavender); font-size: 11px;">TOOL 1 IN SUITE</span>
-              <a href="/" class="btn-slush btn-slush-black" style="padding: 6px 14px; font-size: 12px;">Test Symmetry →</a>
+              <span class="sticker" style="background-color: var(--color-soft-mist); font-size: 11px;">COMING SOON</span>
+              <span class="btn-slush btn-slush-white" style="padding: 6px 14px; font-size: 12px; opacity: 0.6; cursor: not-allowed; pointer-events: none;">Article Coming Soon</span>
             </div>
           </article>
 
@@ -307,11 +295,11 @@
               The gonial angle (the angle formed between the posterior border of the mandibular ramus and the inferior border of the mandibular body) determines jawline sharpness and neck-to-jaw transition.
             </p>
             <p style="font-size: 14px; margin-bottom: 18px; line-height: 1.5;">
-              Cephalometric standards identify 118°–124° as the ideal masculine definition range and 122°–128° as the ideal feminine curve. Angles above 132° produce a retrognathic or soft appearance, while angles below 115° indicate hyper-brachycephalic morphology.
+              The gonial angle determines jawline sharpness. Ideal range is 118°–124° for masculine definition and 122°–128° for feminine curves. Full guide coming soon.
             </p>
             <div style="border-top: 1px solid var(--color-carbon); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="sticker" style="background-color: var(--color-mint-pop); font-size: 11px;">TOOL 3 IN SUITE</span>
-              <a href="/" class="btn-slush btn-slush-black" style="padding: 6px 14px; font-size: 12px;">Measure Gonial Angle →</a>
+              <span class="sticker" style="background-color: var(--color-soft-mist); font-size: 11px;">COMING SOON</span>
+              <span class="btn-slush btn-slush-white" style="padding: 6px 14px; font-size: 12px; opacity: 0.6; cursor: not-allowed; pointer-events: none;">Article Coming Soon</span>
             </div>
           </article>
 
@@ -325,11 +313,11 @@
               High cheekbones create the coveted aesthetic "ogee curve" of the midface, framing the eyes and providing natural structural support to preventing midface descent.
             </p>
             <p style="font-size: 14px; margin-bottom: 18px; line-height: 1.5;">
-              A compact midface ratio (interpupillary distance divided by distance from pupillary line to upper lip stomion) approaching 1:1 is universally scored higher for perceived youthfulness, preventing facial elongation associated with chronological aging.
+              High cheekbones create the "ogee curve" of the midface. A compact midface ratio approaching 1:1 is scored higher for perceived youthfulness. Full guide coming soon.
             </p>
             <div style="border-top: 1px solid var(--color-carbon); padding-top: 14px; display: flex; justify-content: space-between; align-items: center;">
-              <span class="sticker" style="background-color: var(--color-sunburst); font-size: 11px;">TOOL 4 IN SUITE</span>
-              <a href="/" class="btn-slush btn-slush-black" style="padding: 6px 14px; font-size: 12px;">Scan Cheekbones →</a>
+              <span class="sticker" style="background-color: var(--color-soft-mist); font-size: 11px;">COMING SOON</span>
+              <span class="btn-slush btn-slush-white" style="padding: 6px 14px; font-size: 12px; opacity: 0.6; cursor: not-allowed; pointer-events: none;">Article Coming Soon</span>
             </div>
           </article>
         </div>
@@ -365,12 +353,12 @@
     <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-inner">
-        <div>
+        <div class="footer-brand">
           <a href="/" class="brand-badge" style="margin-bottom: 12px;">
             <span class="brand-logo-disc">TG</span>
             Tool Genie
           </a>
-          <p style="font-size: 14px; max-width: 320px; line-height: 1.5; color: var(--color-carbon);">
+          <p>
             AI Full Face Analyzer measuring facial attractiveness, symmetry, golden ratio adherence, and aesthetic harmony.
           </p>
         </div>
@@ -387,17 +375,19 @@
         </div>
 
         <div class="footer-col">
-          <h4>Pages</h4>
+          <h4>Pages & Science</h4>
           <ul>
-            <li><a href="/">Home</a></li>
             <li><a href="/blog">Biometrics Blog</a></li>
             <li><a href="/contact">Contact Research Team</a></li>
-            <li><a href="/#methodology">Methodology & Canons</a></li>
+            <li><a href="/about">About Tool Genie</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/history">Delete My History</a></li>
           </ul>
         </div>
       </div>
 
-      <div style="text-align: center; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--color-carbon); font-size: 13px; font-weight: 700;">
+      <div class="footer-bottom-bar">
         &copy; 2026 Tool Genie — Biometrics & Aesthetics Scientific Blog.
       </div>
     </footer>
@@ -423,4 +413,54 @@
       document.body.style.overflow = '';
     }
   };
+
+  // Live Blog Search Functionality
+  window.handleBlogSearch = function(query) {
+    const q = (query || '').trim().toLowerCase();
+    const clearBtn = document.getElementById('blogSearchClearBtn');
+    const resultCount = document.getElementById('blogSearchCount');
+    const noResultsBox = document.getElementById('noResultsBox');
+    const grid = document.getElementById('blogGrid');
+    const articles = grid ? grid.querySelectorAll('.slush-info-card') : [];
+
+    if (clearBtn) {
+      clearBtn.style.display = q ? 'block' : 'none';
+    }
+
+    let matchCount = 0;
+    articles.forEach(function(article) {
+      const text = (article.innerText || '').toLowerCase();
+      if (!q || text.includes(q)) {
+        article.style.display = '';
+        matchCount++;
+      } else {
+        article.style.display = 'none';
+      }
+    });
+
+    if (resultCount) {
+      if (!q) {
+        resultCount.textContent = '4 clinical articles available';
+      } else if (matchCount === 1) {
+        resultCount.textContent = 'Found 1 matching article';
+      } else {
+        resultCount.textContent = 'Found ' + matchCount + ' matching articles';
+      }
+    }
+
+    if (noResultsBox) {
+      noResultsBox.style.display = matchCount === 0 ? 'block' : 'none';
+    }
+  };
+
+  window.clearBlogSearch = function() {
+    const input = document.getElementById('blogSearchInput');
+    if (input) {
+      input.value = '';
+      window.handleBlogSearch('');
+      input.focus();
+    }
+  };
 </script>
+</body>
+</html>
