@@ -3,7 +3,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Homepage
+    // Homepage 
     if (path === "/" || path === "") {
       return env.ASSETS.fetch(new Request(new URL("/index.html", url), request));
     }
