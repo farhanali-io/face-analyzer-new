@@ -29,8 +29,8 @@ export default {
     }
 
     // Privacy Policy
-    if (path === "/privacy-policy" || path === "/privacy-policy/") {
-      return env.ASSETS.fetch(new Request(new URL("/privacy-policy.html", url), request));
+    if (path === "/privacy" || path === "/privacy/") {
+      return env.ASSETS.fetch(new Request(new URL("/privacy.html", url), request));
     }
 
     // Terms of Service
