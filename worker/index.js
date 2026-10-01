@@ -39,8 +39,8 @@ export default {
     }
 
     // Delete History
-    if (path === "/delete-history" || path === "/delete-history/") {
-      return env.ASSETS.fetch(new Request(new URL("/delete-history.html", url), request));
+    if (path === "/history" || path === "/history/") {
+      return env.ASSETS.fetch(new Request(new URL("/history.html", url), request));
     }
 
     // Blog articles: /blog/slug -> /blog/slug.html
