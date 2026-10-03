@@ -971,37 +971,38 @@
 
   <!-- Module Scripts -->
   <script type="module">
-    import { initSlushRibbon } from '/src/ribbon.js';
-    import '/faceAnalyzer.js';
+  import { initSlushRibbon } from '/ribbon.js';
+  import '/faceAnalyzer.js';
+  import '/deepScan.js';
 
-    // Start 3D Inflatable Ribbon
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSlushRibbon);
-    } else {
-      initSlushRibbon();
-    }
+  // Start 3D Inflatable Ribbon
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSlushRibbon);
+  } else {
+    initSlushRibbon();
+  }
 
-    // Drag and drop initialization
-    const dropZone = document.getElementById('dropZone');
-    if (dropZone) {
-      ['dragenter', 'dragover'].forEach(name => {
-        dropZone.addEventListener(name, (e) => {
-          e.preventDefault();
-          dropZone.classList.add('dragover');
-        });
+  // Drag and drop initialization
+  const dropZone = document.getElementById('dropZone');
+  if (dropZone) {
+    ['dragenter', 'dragover'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
       });
-      ['dragleave', 'drop'].forEach(name => {
-        dropZone.addEventListener(name, (e) => {
-          e.preventDefault();
-          dropZone.classList.remove('dragover');
-        });
+    });
+    ['dragleave', 'drop'].forEach(name => {
+      dropZone.addEventListener(name, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
       });
-      dropZone.addEventListener('drop', (e) => {
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-          window.handleFileSelect({ target: { files: e.dataTransfer.files } });
-        }
-      });
-    }
-  </script>
+    });
+    dropZone.addEventListener('drop', (e) => {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        window.handleFileSelect({ target: { files: e.dataTransfer.files } });
+      }
+    });
+  }
+</script>
 </body>
 </html>
