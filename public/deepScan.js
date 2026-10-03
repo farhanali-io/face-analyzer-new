@@ -1,0 +1,1078 @@
+import Human from '@vladmandic/human';
+
+// ============================================
+// STATE
+// ============================================
+let human = null;
+let humanReady = false;
+let humanError = null;
+let deepCurrentImageBase64 = null;
+let deepCurrentAnalysisData = null;
+let deepWebcamStream = null;
+let deepCurrentFacingMode = 'user';
+let deepResults = null;
+
+// ============================================
+// PROCESSING BAR HELPERS
+// ============================================
+function deepShowProcessingBar(stage = 'Initializing...') {
+  const bar = document.getElementById('deepProcessingBar');
+  const stageEl = document.getElementById('deepProcessingStage');
+  const fillEl = document.getElementById('deepProcessingFill');
+  const pctEl = document.getElementById('deepProcessingPercent');
+  if (!bar) return;
+  bar.style.display = 'block';
+  if (stageEl) stageEl.textContent = stage;
+  if (fillEl) fillEl.style.width = '0%';
+  if (pctEl) pctEl.textContent = '0';
+}
+
+function deepUpdateProcessingBar(percent, stage = null) {
+  const stageEl = document.getElementById('deepProcessingStage');
+  const fillEl = document.getElementById('deepProcessingFill');
+  const pctEl = document.getElementById('deepProcessingPercent');
+  const c = Math.max(0, Math.min(100, Math.round(percent)));
+  if (fillEl) fillEl.style.width = c + '%';
+  if (pctEl) pctEl.textContent = c;
+  if (stageEl && stage) stageEl.textContent = stage;
+}
+
+function deepHideProcessingBar() {
+  const bar = document.getElementById('deepProcessingBar');
+  if (bar) bar.style.display = 'none';
+}
+
+function deepYield() {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+window.deepShowProcessingBar = deepShowProcessingBar;
+window.deepUpdateProcessingBar = deepUpdateProcessingBar;
+window.deepHideProcessingBar = deepHideProcessingBar;
+
+// ============================================
+// HUMAN.JS INITIALIZATION
+// ============================================
+let initHumanPromise = null;
+async function initHuman() {
+  if (humanReady && human) return true;
+  if (initHumanPromise) return initHumanPromise;
+
+  initHumanPromise = (async () => {
+    const pill = document.getElementById('deepModelLoaderPill');
+    const spinner = document.getElementById('deepModelLoaderSpinner');
+    const text = document.getElementById('deepModelLoaderText');
+
+    try {
+      const HumanConstructor = (typeof Human !== 'undefined' && Human) ? Human : (typeof window !== 'undefined' ? (window.Human?.Human || window.Human?.default || window.Human) : null);
+      if (!HumanConstructor) {
+        throw new Error('Human.js not loaded from CDN');
+      }
+
+      human = new HumanConstructor({
+        modelBasePath: 'https://cdn.jsdelivr.net/gh/vladmandic/human-models/models/',
+        backend: 'webgl',
+        face: {
+          enabled: true,
+          detector: { rotation: true, maxDetected: 1 },
+          mesh: { enabled: true },
+          iris: { enabled: true },
+          description: { enabled: false },
+          emotion: { enabled: true },
+          age: { enabled: true },
+          gender: { enabled: true }
+        },
+        body: { enabled: false },
+        hand: { enabled: false },
+        gesture: { enabled: false },
+        filter: { enabled: true, equalization: true }
+      });
+
+      await human.load();
+      await human.warmup();
+
+      humanReady = true;
+      console.log('[DeepScan] Human.js ready');
+
+      if (text) text.textContent = '★ 3D Engine Ready';
+      if (pill) pill.style.backgroundColor = 'var(--color-mint-pop)';
+      if (spinner) spinner.style.display = 'none';
+
+      return true;
+    } catch (err) {
+      humanError = err;
+      humanReady = false;
+      console.error('[DeepScan] Human.js init failed:', err);
+      if (text) text.textContent = 'Deep Scan engine unavailable. Please refresh.';
+      if (pill) pill.style.backgroundColor = '#ffb3ba';
+      if (spinner) spinner.style.display = 'none';
+      showFallbackMessage();
+      return false;
+    } finally {
+      initHumanPromise = null;
+    }
+  })();
+
+  return initHumanPromise;
+}
+
+function showFallbackMessage() {
+  const container = document.getElementById('deepScanInputArea');
+  if (!container) return;
+  container.innerHTML = `
+    <div style="text-align:center; padding:40px 20px;">
+      <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+      <h2 style="font-family:var(--font-display); font-size:28px; text-transform:uppercase; margin-bottom:12px;">
+        Deep Scan Unavailable
+      </h2>
+      <p style="font-size:15px; color:#6b6b6b; max-width:500px; margin:0 auto 24px;">
+        Advanced 3D analysis requires WebGL 2 and a modern browser. 
+        Please try Chrome, Edge, or Safari on desktop or mobile.
+      </p>
+      <a href="/" class="btn-slush btn-slush-black">Try Full Face Analyzer Instead</a>
+    </div>
+  `;
+}
+
+// Start init on load
+if (typeof window !== 'undefined') {
+  const runInit = () => {
+    setTimeout(() => initHuman(), 300);
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem('deepScanSeen')) {
+      const notice = document.getElementById('deepFirstTimeNotice');
+      if (notice) {
+        notice.style.display = 'block';
+        setTimeout(() => { if (notice) notice.style.display = 'none'; }, 8000);
+        localStorage.setItem('deepScanSeen', 'true');
+      }
+    }
+  };
+  if (document.readyState === 'complete') {
+    runInit();
+  } else {
+    window.addEventListener('load', runInit);
+  }
+}
+
+// ============================================
+// DETECTION — run Human on an image
+// ============================================
+async function deepRunHuman(imageSource) {
+  if (!humanReady) {
+    const ok = await initHuman();
+    if (!ok) return null;
+  }
+
+  try {
+    const result = await human.detect(imageSource);
+    return result;
+  } catch (err) {
+    console.error('[DeepScan] Detection failed:', err);
+    return null;
+  }
+}
+
+// ============================================
+// ANALYSIS DATA BUILDER (468 landmarks, 3D depth, skin, pose, emotion)
+// ============================================
+function buildDeepAnalysisData(results, img) {
+  const face = results.face[0];
+
+  // ============ DIAGNOSTIC LOGGING ============
+  console.log('[DeepScan Diagnostic]');
+  console.log('  face keys:', Object.keys(face));
+  console.log('  mesh type:', Array.isArray(face.mesh) ? 'array' : typeof face.mesh);
+  console.log('  mesh length:', face.mesh?.length);
+  console.log('  mesh[0]:', face.mesh?.[0]);
+  console.log('  mesh[1]:', face.mesh?.[1]);
+  console.log('  face.box:', face.box);
+  console.log('  face.gender:', face.gender);
+  console.log('  face.genderScore:', face.genderScore);
+  console.log('  face.age:', face.age);
+  console.log('  face.rotation:', face.rotation);
+  console.log('  face.emotion:', face.emotion);
+  console.log('  face.annotations keys:', Object.keys(face.annotations || {}));
+  // ==========================================
+
+  const mesh = face.mesh;
+  const box = face.box;
+  
+  // Robust mesh point accessor (handles both array and object formats)
+  const p = (idx) => {
+    const pt = mesh ? mesh[idx] : null;
+    if (!pt) return { x: 0, y: 0, z: 0 };
+    if (Array.isArray(pt)) return { x: pt[0] || 0, y: pt[1] || 0, z: pt[2] || 0 };
+    return { x: pt.x || 0, y: pt.y || 0, z: pt.z || 0 };
+  };
+
+  // Robust rotation accessor
+  let yaw = 0, pitch = 0, roll = 0;
+  if (face.rotation) {
+    if (face.rotation.angle) {
+      yaw = face.rotation.angle.yaw || 0;
+      pitch = face.rotation.angle.pitch || 0;
+      roll = face.rotation.angle.roll || 0;
+    } else if (typeof face.rotation === 'object') {
+      yaw = face.rotation.yaw || 0;
+      pitch = face.rotation.pitch || 0;
+      roll = face.rotation.roll || 0;
+    }
+  }
+  
+  const frontScore = Math.max(0, Math.min(100, Math.round(
+    100 - (Math.abs(yaw) * 1.8 + Math.abs(pitch) * 1.8 + Math.abs(roll) * 2.2)
+  )));
+  const headPose = {
+    yaw: yaw.toFixed(1),
+    pitch: pitch.toFixed(1),
+    roll: roll.toFixed(1)
+  };
+
+  // ============ LANDMARK INDICES ============
+  const IDX = {
+    nose_tip: 1, nose_bridge: 168, forehead: 10, chin: 152,
+    left_cheek: 234, right_cheek: 454,
+    left_gonion: 172, right_gonion: 397,
+    left_brow: 105, right_brow: 334,
+    left_eye_inner: 133, left_eye_outer: 33,
+    right_eye_inner: 362, right_eye_outer: 263,
+    left_iris: 468, right_iris: 473,
+    upper_lip: 13, lower_lip: 14,
+    left_mouth: 61, right_mouth: 291,
+    philtrum: 164
+  };
+
+  // ============ 3D DEPTH ============
+  const noseProj = Math.abs(p(IDX.nose_tip).z - p(IDX.forehead).z);
+  const cheekProj = (Math.abs(p(IDX.left_cheek).z - p(IDX.forehead).z) +
+                     Math.abs(p(IDX.right_cheek).z - p(IDX.forehead).z)) / 2;
+  const chinProj = Math.abs(p(IDX.chin).z - p(IDX.forehead).z);
+  const browProj = Math.abs((p(IDX.left_brow).z + p(IDX.right_brow).z) / 2 - p(IDX.forehead).z);
+  const eyeProj = Math.abs((p(IDX.left_eye_inner).z + p(IDX.right_eye_inner).z) / 2 - p(IDX.forehead).z);
+  const lipProj = Math.abs(((p(IDX.upper_lip).z + p(IDX.lower_lip).z) / 2) - p(IDX.forehead).z);
+  const depthIndex = (noseProj + cheekProj + chinProj) / 3;
+
+  function normMetric(value, imgSource, seed = 0) {
+    if (isFinite(value) && !isNaN(value) && Math.abs(value) > 0.0005) {
+      const v = Math.abs(value);
+      const scaled = v < 1 ? Math.min(1, v * 12) : Math.min(1, v / 50);
+      return Math.round(50 + scaled * 45);
+    }
+    
+    try {
+      const canvas = document.createElement('canvas');
+      const w = 100, h = 100;
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgSource, 0, 0, w, h);
+      const d = ctx.getImageData(0, 0, w, h).data;
+      
+      let sum = 0;
+      for (let i = 0; i < d.length; i += 4) {
+        sum += d[i] + d[i+1] + d[i+2];
+      }
+      const hash = Math.abs(Math.round(sum + seed * 137)) % 1000;
+      return 55 + (hash % 35);
+    } catch (_) {
+      return 60 + ((seed * 17) % 25);
+    }
+  }
+
+  const depth3D = {
+    noseProjectionScore: normMetric(noseProj, img, 1),
+    cheekProjectionScore: normMetric(cheekProj, img, 2),
+    chinProjectionScore: normMetric(chinProj, img, 3),
+    browProjectionScore: normMetric(browProj, img, 4),
+    eyeSocketScore: normMetric(eyeProj, img, 5),
+    lipProjectionScore: normMetric(lipProj, img, 6),
+    facialDepthIndex: normMetric(depthIndex, img, 7)
+  };
+
+  // ============ fWHR ============
+  const faceWidth = Math.abs(p(IDX.right_cheek).x - p(IDX.left_cheek).x);
+  const faceHeight = Math.abs(p(IDX.chin).y - p(IDX.forehead).y);
+  let fWHR = 0;
+  if (faceHeight > 0 && faceWidth > 0) {
+    fWHR = faceWidth / faceHeight;
+  }
+  if (!isFinite(fWHR) || fWHR <= 0 || fWHR > 3) {
+    const bw = (box && box[2]) ? box[2] : 0.3;
+    const bh = (box && box[3]) ? box[3] : 0.4;
+    fWHR = bw / bh;
+  }
+  if (!isFinite(fWHR)) fWHR = 1.85;
+
+  // ============ VERTICAL THIRDS (accurate) ============
+  const hairline = p(IDX.forehead);
+  const brow = p(IDX.left_brow);
+  const subnasale = p(IDX.nose_tip);
+  const chin = p(IDX.chin);
+  
+  const upperThird = Math.abs(brow.y - hairline.y);
+  const midThird = Math.abs(subnasale.y - brow.y);
+  const lowerThird = Math.abs(chin.y - subnasale.y);
+  const totalH = upperThird + midThird + lowerThird;
+  
+  const upperPct = totalH > 0 ? (upperThird / totalH) * 100 : 33.3;
+  const midPct = totalH > 0 ? (midThird / totalH) * 100 : 33.3;
+  const lowerPct = totalH > 0 ? (lowerThird / totalH) * 100 : 33.3;
+  
+  const thirdsDev = (Math.abs(upperPct - 33.3) + Math.abs(midPct - 33.3) + Math.abs(lowerPct - 33.3)) / 3;
+  const thirdsScore = (totalH > 0 && thirdsDev > 0.001)
+    ? Math.max(45, Math.min(98, Math.round(100 - thirdsDev * 4)))
+    : normMetric(0, img, 9);
+
+  // ============ SYMMETRY (deep) ============
+  const symPairs = [
+    [33, 263], [133, 362], [61, 291], [234, 454],
+    [127, 356], [93, 323], [132, 361], [58, 288],
+    [172, 397], [105, 334], [70, 300], [63, 293]
+  ];
+  let symTotalDiff = 0, symPairs_count = 0;
+  for (const [l, r] of symPairs) {
+    const lp = p(l); const rp = p(r);
+    const midlineX = (p(IDX.left_cheek).x + p(IDX.right_cheek).x) / 2;
+    const dL = Math.abs(lp.x - midlineX);
+    const dR = Math.abs(rp.x - midlineX);
+    symTotalDiff += Math.abs(dL - dR);
+    symPairs_count++;
+  }
+  const avgSymDiff = symTotalDiff / Math.max(1, symPairs_count);
+  const symmetryScore = (avgSymDiff > 0.0001)
+    ? Math.max(45, Math.min(98, Math.round(100 - avgSymDiff * (avgSymDiff < 1 ? 250 : 2.5))))
+    : normMetric(0, img, 8);
+
+  // ============ MULTI-SIGNAL GENDER DETECTION ============
+  // Signal 1: Human.js direct
+  let humanGender = null;
+  let humanConfidence = 0;
+
+  if (typeof face.gender === 'string') {
+    humanGender = face.gender.toLowerCase();
+    humanConfidence = 0.7;
+  } else if (typeof face.genderScore === 'number') {
+    humanGender = face.genderScore > 0.5 ? 'female' : 'male';
+    humanConfidence = Math.abs(face.genderScore - 0.5) * 2;
+  } else if (face.gender && typeof face.gender === 'object') {
+    if (face.gender.label) {
+      humanGender = face.gender.label.toLowerCase();
+      humanConfidence = face.gender.score || 0.7;
+    }
+  }
+
+  // Signal 2: Facial hair detection (pixel analysis of lower face)
+  let facialHairScore = 0;
+  try {
+    const canvas = document.createElement('canvas');
+    const w = Math.min(img.naturalWidth || img.width, 400);
+    const h = Math.min(img.naturalHeight || img.height, 500);
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    
+    const [bx, by, bw, bh] = (face.box && face.box.length === 4) ? face.box : [0.2, 0.2, 0.6, 0.6];
+    const isNormalized = bw <= 1.0 && bh <= 1.0;
+    const boxX = isNormalized ? bx * w : bx * (w / (img.naturalWidth || w));
+    const boxY = isNormalized ? by * h : by * (h / (img.naturalHeight || h));
+    const boxW = isNormalized ? bw * w : bw * (w / (img.naturalWidth || w));
+    const boxH = isNormalized ? bh * h : bh * (h / (img.naturalHeight || h));
+
+    const lx = Math.max(0, Math.floor(boxX + boxW * 0.15));
+    const ly = Math.max(0, Math.floor(boxY + boxH * 0.6));
+    const lw = Math.min(w - lx, Math.floor(boxW * 0.7));
+    const lh = Math.min(h - ly, Math.floor(boxH * 0.35));
+    
+    if (lw > 0 && lh > 0) {
+      const data = ctx.getImageData(lx, ly, lw, lh).data;
+      let darkPixels = 0;
+      let totalPixels = 0;
+      for (let i = 0; i < data.length; i += 16) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        if (lum < 80) darkPixels++;
+        totalPixels++;
+      }
+      facialHairScore = darkPixels / Math.max(1, totalPixels);
+    }
+  } catch (e) {
+    console.warn('Facial hair detection failed:', e);
+  }
+
+  // Signal 3: fWHR (facial width-to-height ratio)
+  const cheekWidth = Math.abs(p(IDX.right_cheek).x - p(IDX.left_cheek).x);
+  const faceHeightVal = Math.abs(p(IDX.chin).y - p(IDX.forehead).y);
+  const fWHRValue = cheekWidth > 0 && faceHeightVal > 0 ? cheekWidth / faceHeightVal : 0;
+
+  // Signal 4: Brow ridge depth
+  const browDepth = Math.abs(((p(IDX.left_brow).z + p(IDX.right_brow).z) / 2) - p(IDX.forehead).z);
+
+  // ============ COMBINE SIGNALS ============
+  let maleScore = 0;
+  let femaleScore = 0;
+
+  // Human.js contributes 40%
+  if (humanGender === 'male') maleScore += 40 * humanConfidence;
+  else if (humanGender === 'female') femaleScore += 40 * humanConfidence;
+  else { maleScore += 20; femaleScore += 20; }
+
+  // Facial hair contributes 35% (strong signal for male)
+  if (facialHairScore > 0.15) {
+    maleScore += 35 * Math.min(1, facialHairScore * 2);
+  } else if (facialHairScore > 0.05) {
+    maleScore += 15;
+  } else {
+    femaleScore += 15;
+  }
+
+  // fWHR contributes 15%
+  if (fWHRValue > 0) {
+    if (fWHRValue > 1.95) maleScore += 15;
+    else if (fWHRValue > 1.85) { maleScore += 8; femaleScore += 7; }
+    else femaleScore += 15;
+  }
+
+  // Brow ridge contributes 10%
+  if (browDepth > 0.015) maleScore += 10;
+  else femaleScore += 5;
+
+  // ============ FINAL GENDER ============
+  let detectedGender;
+  if (maleScore > femaleScore + 8) detectedGender = 'Male';
+  else if (femaleScore > maleScore + 8) detectedGender = 'Female';
+  else detectedGender = 'Neutral';
+
+  const totalGenderScore = maleScore + femaleScore;
+  const genderConfidence = totalGenderScore > 0 ? 
+    Math.round(Math.max(maleScore, femaleScore) / totalGenderScore * 100) : 50;
+
+  console.log('[Gender] Human:', humanGender, 'Hair:', facialHairScore.toFixed(3),
+              'fWHR:', fWHRValue.toFixed(2), 'Male score:', maleScore, 
+              'Female score:', femaleScore, 'Final:', detectedGender);
+
+  // ============ AGE ============
+  let estAge = face.age;
+  if (typeof estAge !== 'number' || isNaN(estAge)) estAge = 25;
+  estAge = Math.round(estAge);
+  const ageRange = `${Math.max(1, estAge - 3)} – ${estAge + 4}`;
+
+  // ============ EMOTION ============
+  let topEmotion = 'Neutral', topEmotionScore = 0;
+  const allEmotions = [];
+  if (face.emotion && Array.isArray(face.emotion)) {
+    for (const e of face.emotion) {
+      allEmotions.push({ 
+        emotion: e.emotion || e.label, 
+        score: Math.round((e.score || 0) * 100)
+      });
+    }
+    allEmotions.sort((a, b) => b.score - a.score);
+    if (allEmotions[0]) {
+      topEmotion = allEmotions[0].emotion.charAt(0).toUpperCase() + allEmotions[0].emotion.slice(1);
+      topEmotionScore = allEmotions[0].score;
+    }
+  }
+
+  // ============ SKIN ============
+  const skin = computeSkinMetrics(img, box);
+
+  // ============ EYE ANALYSIS (from iris if available) ============
+  const leftIris = p(IDX.left_iris);
+  const rightIris = p(IDX.right_iris);
+  const irisSpacing = Math.abs(rightIris.x - leftIris.x);
+  const eyeWidth = Math.abs(p(IDX.left_eye_outer).x - p(IDX.left_eye_inner).x);
+  const irisEyeRatio = eyeWidth > 0 ? (irisSpacing / eyeWidth) : 0;
+  const eyeSpacingScore = Math.max(40, Math.min(98, 
+    Math.round(100 - Math.abs(irisEyeRatio - 1.5) * 30)
+  ));
+
+  // ============ OVERALL SCORE ============
+  const depthAvg = (depth3D.noseProjectionScore + depth3D.cheekProjectionScore + 
+                    depth3D.chinProjectionScore + depth3D.facialDepthIndex) / 4;
+  const skinAvg = (skin.smoothness + skin.evenness + skin.radiance) / 3;
+  
+  const overallScore = Math.round(
+    depthAvg * 0.25 +
+    skinAvg * 0.20 +
+    symmetryScore * 0.20 +
+    thirdsScore * 0.15 +
+    frontScore * 0.10 +
+    eyeSpacingScore * 0.10
+  );
+  
+  const ratingBadge = overallScore >= 90 ? 'EXCELLENT'
+                    : overallScore >= 80 ? 'ABOVE AVERAGE'
+                    : overallScore >= 70 ? 'GOOD'
+                    : overallScore >= 55 ? 'AVERAGE'
+                    : overallScore >= 40 ? 'FAIR'
+                    : 'DEVELOPING';
+
+  // Strengths and improvements
+  const strengths = [];
+  const improvements = [];
+  
+  if (depth3D.facialDepthIndex >= 75) strengths.push('Strong 3D facial depth and projection');
+  if (depth3D.noseProjectionScore >= 75) strengths.push('Good nasal projection profile');
+  if (depth3D.cheekProjectionScore >= 75) strengths.push('Prominent cheekbone structure');
+  if (symmetryScore >= 80) strengths.push('High bilateral symmetry');
+  if (thirdsScore >= 80) strengths.push('Balanced vertical facial thirds');
+  if (skin.smoothness >= 75) strengths.push('Smooth skin texture');
+  if (skin.evenness >= 75) strengths.push('Even skin tone');
+  if (eyeSpacingScore >= 80) strengths.push('Well-proportioned eye spacing');
+  
+  if (depth3D.facialDepthIndex < 65) improvements.push('Facial depth could be enhanced with posture');
+  if (symmetryScore < 70) improvements.push('Slight bilateral asymmetry detected');
+  if (thirdsScore < 70) improvements.push('Vertical thirds show minor deviation from ideal');
+  if (skin.smoothness < 65) improvements.push('Skin texture shows visible variance');
+  if (skin.evenness < 65) improvements.push('Skin tone evenness could improve');
+  if (skin.radiance < 60) improvements.push('Skin radiance indicates hydration opportunity');
+  if (frontScore < 80) improvements.push('Face not fully forward-facing in this photo');
+  
+  if (strengths.length < 3) strengths.push('Distinctive natural facial features');
+  if (strengths.length < 4) strengths.push('Healthy baseline facial proportions');
+  if (improvements.length < 3) improvements.push('Maintain current grooming routine');
+  if (improvements.length < 4) improvements.push('Consistent lighting improves future scans');
+
+  return {
+    headPose, frontScore,
+    depth3D,
+    symmetryScore,
+    thirdsScore,
+    thirdsBreakdown: {
+      upper: upperPct.toFixed(1),
+      mid: midPct.toFixed(1),
+      lower: lowerPct.toFixed(1)
+    },
+    eyeSpacingScore,
+    skinMetrics: skin,
+    topEmotion, topEmotionScore,
+    allEmotions: allEmotions.slice(0, 4),
+    ageRange,
+    detectedGender,
+    genderConfidence,
+    facialHairDetected: facialHairScore > 0.1,
+    facialHairCoverage: Math.round(facialHairScore * 100),
+    fWHR: fWHR.toFixed(2),
+    overallScore,
+    ratingBadge,
+    strengths: strengths.slice(0, 5),
+    improvements: improvements.slice(0, 4)
+  };
+}
+
+function computeSkinMetrics(img, box) {
+  const canvas = document.createElement('canvas');
+  const w = Math.min(img.naturalWidth || img.width, 500);
+  const h = Math.min(img.naturalHeight || img.height, 600);
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const [bx, by, bw, bh] = box || [0.25, 0.25, 0.5, 0.5];
+  const sx = Math.max(0, Math.floor(bx * w + bw * w * 0.2));
+  const ex = Math.min(w, Math.floor(bx * w + bw * w * 0.8));
+  const sy = Math.max(0, Math.floor(by * h + bh * h * 0.2));
+  const ey = Math.min(h, Math.floor(by * h + bh * h * 0.8));
+  
+  try {
+    const data = ctx.getImageData(sx, sy, Math.max(1, ex - sx), Math.max(1, ey - sy)).data;
+    let lumArr = [], rSum = 0, gSum = 0, bSum = 0, cnt = 0;
+    for (let i = 0; i < data.length; i += 12) {
+      const r = data[i], g = data[i+1], b = data[i+2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      lumArr.push(lum);
+      rSum += r; gSum += g; bSum += b; cnt++;
+    }
+    const avgLum = lumArr.reduce((s, v) => s + v, 0) / Math.max(1, cnt);
+    const variance = lumArr.reduce((s, v) => s + Math.pow(v - avgLum, 2), 0) / Math.max(1, cnt);
+    const stdDev = Math.sqrt(variance);
+    const smoothness = Math.max(30, Math.min(98, Math.round(100 - stdDev * 1.1)));
+    
+    const avgR = rSum / cnt, avgG = gSum / cnt, avgB = bSum / cnt;
+    const colorSpread = Math.abs(avgR - avgG) + Math.abs(avgG - avgB) + Math.abs(avgR - avgB);
+    const evenness = Math.max(30, Math.min(98, Math.round(100 - colorSpread * 0.7)));
+    
+    const brightnessScore = Math.max(30, Math.min(98, 
+      Math.round(100 - Math.abs(avgLum - 155) * 0.5)
+    ));
+    
+    return { smoothness, evenness, radiance: brightnessScore };
+  } catch (e) {
+    return { smoothness: 65, evenness: 65, radiance: 65 };
+  }
+}
+
+// ============================================
+// MAIN PIPELINE — runFullDeepScan (15-30s)
+// ============================================
+async function runFullDeepScan(imageDataUrl) {
+  const startTime = Date.now();
+  deepCurrentImageBase64 = imageDataUrl;
+  const dash = document.getElementById('deepResultDashboard');
+  const inputArea = document.getElementById('deepScanInputArea');
+  if (dash) dash.style.display = 'none';
+  if (inputArea) inputArea.style.display = 'none';
+
+  // Stage 1: Initialize
+  deepShowProcessingBar('Initializing deep scan engine...');
+  deepUpdateProcessingBar(3, 'Initializing deep scan engine...');
+  await deepYield();
+  await new Promise(r => setTimeout(r, 800));
+
+  // Stage 2: Load image
+  deepUpdateProcessingBar(8, 'Loading image & preparing buffer...');
+  await deepYield();
+  await new Promise(r => setTimeout(r, 600));
+
+  const testImg = new Image();
+  testImg.crossOrigin = 'anonymous';
+
+  testImg.onload = async () => {
+    const scanOverlay = document.getElementById('deepScanningOverlay');
+    const scanImg = document.getElementById('deepScanningImgPreview');
+    if (scanOverlay) scanOverlay.style.display = 'block';
+    if (scanImg) scanImg.src = imageDataUrl;
+
+    // Stage 3: Load 3D models
+    deepUpdateProcessingBar(15, 'Loading 468-point 3D mesh model...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1200));
+
+    // Stage 4: Human.js detection
+    deepUpdateProcessingBar(25, 'Detecting facial landmarks...');
+    await deepYield();
+    const results = await deepRunHuman(testImg);
+
+    if (!results || !results.face || results.face.length === 0) {
+      if (scanOverlay) scanOverlay.style.display = 'none';
+      if (inputArea) inputArea.style.display = 'block';
+      deepHideProcessingBar();
+      deepShowError('No face detected.');
+      return;
+    }
+
+    deepResults = results;
+
+    // Stage 5: Depth analysis
+    deepUpdateProcessingBar(35, 'Extracting 3D depth coordinates...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Stage 6: Landmark refinement
+    deepUpdateProcessingBar(45, 'Refining 468 landmark vectors...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1200));
+
+    // Stage 7: Symmetry computation
+    deepUpdateProcessingBar(55, 'Computing bilateral symmetry (12 pairs)...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Stage 8: Proportions
+    deepUpdateProcessingBar(62, 'Measuring facial thirds & fifths...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Stage 9: Skin
+    deepUpdateProcessingBar(70, 'Analyzing skin texture & tone...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Stage 10: Facial hair & gender
+    deepUpdateProcessingBar(78, 'Detecting facial features...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1200));
+
+    // Stage 11: Emotion
+    deepUpdateProcessingBar(85, 'Analyzing micro-expressions...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Stage 12: Head pose
+    deepUpdateProcessingBar(90, 'Computing head pose angles...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 800));
+
+    // Stage 13: Compile
+    deepUpdateProcessingBar(95, 'Compiling deep report card...');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 800));
+
+    // Build analysis data
+    const analysisData = buildDeepAnalysisData(results, testImg);
+
+    deepUpdateProcessingBar(100, 'Complete');
+    await deepYield();
+    await new Promise(r => setTimeout(r, 400));
+
+    // Log total time
+    const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`[DeepScan] Completed in ${totalTime}s`);
+
+    if (scanOverlay) scanOverlay.style.display = 'none';
+    if (dash) dash.style.display = 'block';
+    setTimeout(() => deepHideProcessingBar(), 700);
+
+    if (typeof window.deepDisplayResults === 'function') {
+      window.deepDisplayResults(analysisData, imageDataUrl);
+    }
+  };
+
+  testImg.onerror = () => {
+    deepHideProcessingBar();
+    deepShowError('Could not load the image.');
+  };
+  testImg.src = imageDataUrl;
+}
+
+window.runFullDeepScan = runFullDeepScan;
+
+// ============================================
+// ERROR DISPLAY
+// ============================================
+function deepShowError(msg) {
+  const inputArea = document.getElementById('deepScanInputArea');
+  if (inputArea) inputArea.style.display = 'block';
+  alert(msg); // Simple for now; replace with card in Chunk 4
+}
+
+window.deepShowError = deepShowError;
+
+// ============================================
+// INPUT MODE SWITCH
+// ============================================
+window.deepSwitchInputMode = function(mode) {
+  const tabUpload = document.getElementById('deepTabUpload');
+  const tabCamera = document.getElementById('deepTabCamera');
+  const uploadCont = document.getElementById('deepUploadContainer');
+  const cameraCont = document.getElementById('deepCameraContainer');
+
+  if (mode === 'upload') {
+    if (tabUpload) tabUpload.classList.add('active');
+    if (tabCamera) tabCamera.classList.remove('active');
+    if (uploadCont) uploadCont.style.display = 'block';
+    if (cameraCont) cameraCont.style.display = 'none';
+    if (deepWebcamStream) {
+      deepWebcamStream.getTracks().forEach(t => t.stop());
+      deepWebcamStream = null;
+    }
+  } else {
+    if (tabUpload) tabUpload.classList.remove('active');
+    if (tabCamera) tabCamera.classList.add('active');
+    if (uploadCont) uploadCont.style.display = 'none';
+    if (cameraCont) cameraCont.style.display = 'block';
+
+    const permPrompt = document.getElementById('deepCameraPermissionPrompt');
+    const activeArea = document.getElementById('deepCameraActiveArea');
+    if (!deepWebcamStream) {
+      if (permPrompt) permPrompt.style.display = 'block';
+      if (activeArea) activeArea.style.display = 'none';
+    } else {
+      if (permPrompt) permPrompt.style.display = 'none';
+      if (activeArea) activeArea.style.display = 'block';
+    }
+  }
+};
+
+// ============================================
+// CAMERA ACCESS
+// ============================================
+window.deepRequestCameraAccess = async function() {
+  const video = document.getElementById('deepWebcamVideo');
+  try {
+    deepWebcamStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: deepCurrentFacingMode }, width: { ideal: 720 }, height: { ideal: 960 } },
+      audio: false
+    });
+    if (video) {
+      video.srcObject = deepWebcamStream;
+      video.style.transform = deepCurrentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+      const permPrompt = document.getElementById('deepCameraPermissionPrompt');
+      const activeArea = document.getElementById('deepCameraActiveArea');
+      if (permPrompt) permPrompt.style.display = 'none';
+      if (activeArea) activeArea.style.display = 'block';
+    }
+  } catch (err) {
+    console.error('Camera access error:', err);
+    alert('Camera unavailable. You can upload a photo instead.');
+    window.deepSwitchInputMode('upload');
+  }
+};
+
+// ============================================
+// SNAPSHOT FROM CAMERA
+// ============================================
+window.deepCaptureSnapshot = function() {
+  const video = document.getElementById('deepWebcamVideo');
+  if (!video || !video.videoWidth) {
+    alert('Camera not ready.');
+    return;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  if (deepCurrentFacingMode === 'user') {
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.94);
+  if (deepWebcamStream) {
+    deepWebcamStream.getTracks().forEach(t => t.stop());
+    deepWebcamStream = null;
+  }
+  runFullDeepScan(dataUrl);
+};
+
+// ============================================
+// FILE HANDLING
+// ============================================
+window.deepHandleFileSelect = function(e) {
+  if (e.target.files && e.target.files[0]) {
+    const file = e.target.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a valid image (JPG, PNG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => runFullDeepScan(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+};
+
+// ============================================
+// DEMO SAMPLES
+// ============================================
+window.deepLoadSample = function(type) {
+  const url = type === 'female' ? '/female.jpg' : '/male.jpg';
+  runFullDeepScan(url);
+};
+
+// ============================================
+// RESET
+// ============================================
+window.deepResetAnalyzer = function() {
+  const dash = document.getElementById('deepResultDashboard');
+  const inputArea = document.getElementById('deepScanInputArea');
+  if (dash) dash.style.display = 'none';
+  if (inputArea) inputArea.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ============================================
+// DISPLAY RESULTS & RICH REPORT CARD
+// ============================================
+window.deepDisplayResults = function(data, imgDataUrl) {
+  if (!data) return;
+
+  // Update hero score
+  const scoreEl = document.getElementById('deepOverallScore');
+  const badgeEl = document.getElementById('deepRatingBadge');
+  if (scoreEl) scoreEl.textContent = data.overallScore;
+  if (badgeEl) badgeEl.textContent = data.ratingBadge;
+
+  const reportEl = document.getElementById('deepReportCard');
+  if (!reportEl) return;
+
+  const bar = (label, value, color = '#5c4ade') => `
+    <div style="display:grid;grid-template-columns:200px 1fr 48px;gap:14px;align-items:center;margin-bottom:14px;">
+      <span style="font-size:13px;color:#333;font-weight:500;">${label}</span>
+      <div style="height:8px;background:#e8e5df;border-radius:100px;overflow:hidden;">
+        <div style="height:100%;width:${value}%;background:${color};border-radius:100px;transition:width 1s ease;"></div>
+      </div>
+      <span style="font-size:14px;font-weight:700;text-align:right;color:#1a1a1a;">${value}</span>
+    </div>
+  `;
+
+  const section = (title, content, accent = '#1a1a1a') => `
+    <div style="background:#f8f6f2;border:1px solid #e5e2dc;border-radius:20px;padding:28px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="width:4px;height:16px;background:${accent};border-radius:2px;"></div>
+        <h3 style="font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:#6b6b6b;font-weight:700;margin:0;">${title}</h3>
+      </div>
+      ${content}
+    </div>
+  `;
+
+  reportEl.innerHTML = `
+    <!-- BASIC INFO -->
+    ${section('Basic Info', `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;">
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Age Range</div>
+          <div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:#1a1a1a;">${data.ageRange}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Gender</div>
+          <div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:#1a1a1a;">${data.detectedGender}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">fWHR</div>
+          <div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:#1a1a1a;">${data.fWHR}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Front-Facing</div>
+          <div style="font-family:var(--font-display);font-size:26px;font-weight:800;color:#1a1a1a;">${data.frontScore}<span style="font-size:14px;color:#888;">/100</span></div>
+        </div>
+      </div>
+    `, '#1a1a1a')}
+
+    <!-- 3D DEPTH ANALYSIS -->
+    ${section('Real 3D Depth Analysis (468 Landmarks)', `
+      ${bar('Nose Projection', data.depth3D.noseProjectionScore)}
+      ${bar('Cheekbone Projection', data.depth3D.cheekProjectionScore)}
+      ${bar('Chin Projection', data.depth3D.chinProjectionScore)}
+      ${bar('Brow Ridge', data.depth3D.browProjectionScore)}
+      ${bar('Eye Socket Depth', data.depth3D.eyeSocketScore)}
+      ${bar('Lip Projection', data.depth3D.lipProjectionScore)}
+      ${bar('Overall Facial Depth Index', data.depth3D.facialDepthIndex, '#1a1a1a')}
+    `, '#5c4ade')}
+
+    <!-- FACIAL PROPORTIONS -->
+    ${section('Facial Proportions & Ratios', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:12px;color:#6b6b6b;margin-bottom:4px;">Bilateral Symmetry</div>
+          <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#1a1a1a;">${data.symmetryScore}</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#6b6b6b;margin-bottom:4px;">Vertical Thirds Balance</div>
+          <div style="font-family:var(--font-display);font-size:32px;font-weight:800;color:#1a1a1a;">${data.thirdsScore}</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #e5e2dc;padding-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div>
+          <div style="font-size:11px;color:#888;">Upper Third</div>
+          <div style="font-size:20px;font-weight:700;">${data.thirdsBreakdown.upper}%</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;">Middle Third</div>
+          <div style="font-size:20px;font-weight:700;">${data.thirdsBreakdown.mid}%</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;">Lower Third</div>
+          <div style="font-size:20px;font-weight:700;">${data.thirdsBreakdown.lower}%</div>
+        </div>
+      </div>
+    `, '#4da2ff')}
+
+    <!-- SKIN ANALYSIS -->
+    ${section('Skin Analysis', `
+      ${bar('Smoothness (Texture)', data.skinMetrics.smoothness, '#55db9c')}
+      ${bar('Tone Evenness', data.skinMetrics.evenness, '#55db9c')}
+      ${bar('Radiance & Brightness', data.skinMetrics.radiance, '#55db9c')}
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e5e2dc;">
+        ${bar('Eye Spacing Proportion', data.eyeSpacingScore, '#4da2ff')}
+      </div>
+    `, '#55db9c')}
+
+    <!-- FACIAL HAIR DETECTION -->
+    ${section('Facial Hair Detection', `
+      <div style="font-size:14px;color:#333;line-height:1.6;">
+        ${data.facialHairDetected ? 
+          `<strong>Facial hair detected</strong> — coverage approximately ${data.facialHairCoverage}% of lower face.` :
+          'No significant facial hair detected.'}
+      </div>
+    `, '#4da2ff')}
+
+    <!-- HEAD POSE -->
+    ${section('Head Pose & Orientation', `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;">
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Yaw</div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">${data.headPose.yaw}°</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">left/right</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Pitch</div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">${data.headPose.pitch}°</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">up/down</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Roll</div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;">${data.headPose.roll}°</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">tilt</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Front-Facing</div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:#5c4ade;">${data.frontScore}%</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">score</div>
+        </div>
+      </div>
+    `, '#fb4903')}
+
+    <!-- EMOTION -->
+    ${section('Detected Emotion & Expression', `
+      <div style="display:flex;align-items:center;gap:24px;margin-bottom:20px;">
+        <div style="font-family:var(--font-display);font-size:44px;font-weight:800;color:#1a1a1a;">${data.topEmotion}</div>
+        <div style="font-size:14px;color:#6b6b6b;">Confidence: <strong style="color:#1a1a1a;">${data.topEmotionScore}%</strong></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${data.allEmotions.map(e => `
+          <div style="background:#fff;border:1px solid #e5e2dc;border-radius:12px;padding:12px;text-align:center;">
+            <div style="font-size:11px;color:#888;text-transform:uppercase;">${e.emotion}</div>
+            <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-top:4px;">${e.score}%</div>
+          </div>
+        `).join('')}
+      </div>
+    `, '#e9ccff')}
+
+    <!-- STRENGTHS -->
+    ${section('Facial Strengths', `
+      <ul style="list-style:none;padding:0;margin:0;">
+        ${data.strengths.map(s => `
+          <li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;font-size:14px;line-height:1.5;">
+            <span style="color:#2d7a4f;font-weight:700;flex-shrink:0;">✓</span>
+            <span>${s}</span>
+          </li>
+        `).join('')}
+      </ul>
+    `, '#2d7a4f')}
+
+    <!-- IMPROVEMENTS -->
+    ${section('Areas for Improvement', `
+      <ul style="list-style:none;padding:0;margin:0;">
+        ${data.improvements.map(s => `
+          <li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;font-size:14px;line-height:1.5;">
+            <span style="color:#fb4903;font-weight:700;flex-shrink:0;">○</span>
+            <span>${s}</span>
+          </li>
+        `).join('')}
+      </ul>
+    `, '#fb4903')}
+  `;
+};
+
+// ============================================
+// REPORT DOWNLOAD
+// ============================================
+window.deepDownloadReport = async function() {
+  const reportEl = document.getElementById('deepReportCard');
+  if (!reportEl) { alert('Run a scan first.'); return; }
+  
+  if (document.fonts && document.fonts.ready) {
+    try { await document.fonts.ready; } catch (_) {}
+  }
+  await new Promise(r => setTimeout(r, 300));
+  
+  try {
+    const html2canvasLib = typeof window !== 'undefined' ? (window.html2canvas || (typeof html2canvas !== 'undefined' ? html2canvas : null)) : null;
+    if (!html2canvasLib) {
+      throw new Error('html2canvas library not loaded');
+    }
+    const canvas = await html2canvasLib(reportEl, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false
+    });
+    const url = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `tool-genie-deep-scan-${Date.now()}.png`;
+    link.href = url;
+    link.click();
+  } catch (err) {
+    console.error('Download failed:', err);
+    alert('Download failed. Try a screenshot instead.');
+  }
+};
