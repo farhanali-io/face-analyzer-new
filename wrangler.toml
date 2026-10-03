@@ -1,4 +1,6 @@
-name = "face-analyzer-new" # or face-analyzer-new for the other repo - MUST be different
+name = "face-analyzer-new"
+compatibility_date = "2026-10-03"
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./dist"
