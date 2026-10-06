@@ -9,7 +9,13 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(import.meta.dirname, '.'),
+        '@': path.resolve(process.cwd(), '.'),
+      },
+    },
+    build: {
+      rollupOptions: {
+        // Prevents Vite from throwing an import error for static scripts in public/
+        external: ['/ribbon.js', '/faceAnalyzer.js', '/deepScan.js'],
       },
     },
     server: {
