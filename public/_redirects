@@ -1,0 +1,14 @@
+# 1. Root index redirect
+/index.html / 301!
+
+# 2. Page redirects
+/about.html /about/ 301!
+/blog.html /blog/ 301!
+/contact.html /contact/ 301!
+/deep-scan.html /deep-scan/ 301!
+/history.html /history/ 301!
+/privacy.html /privacy/ 301!
+/terms.html /terms/ 301!
+
+# 3. Catch-all for remaining .html files
+/*.html /:splat/ 301!
