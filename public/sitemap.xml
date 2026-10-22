@@ -5,56 +5,56 @@
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
   <url>
-    <loc>https://www.toolgenie.online/</loc>
+    <loc>https://analyzer.toolgenie.online/</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/deep-scan</loc>
+    <loc>https://analyzer.toolgenie.online/deep-scan</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/blog</loc>
+    <loc>https://analyzer.toolgenie.online/blog</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/contact</loc>
+    <loc>https://analyzer.toolgenie.online/contact</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/about</loc>
+    <loc>https://analyzer.toolgenie.online/about</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/privacy</loc>
+    <loc>https://analyzer.toolgenie.online/privacy</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/terms</loc>
+    <loc>https://analyzer.toolgenie.online/terms</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://www.toolgenie.online/history</loc>
+    <loc>https://analyzer.toolgenie.online/history</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
